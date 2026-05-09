@@ -163,7 +163,7 @@
         .btn-warning { background-color: var(--walton-red); color: white; }
         [data-theme="dark"] .btn-warning { background-color: rgba(248, 113, 113, 0.15); color: #fca5a5; border-color: rgba(248, 113, 113, 0.3); }
         .btn-info { background-color: var(--secondary); }
-        .theme-toggle { margin-left: auto; background-color: #34495e; }
+        .theme-toggle { margin-left: auto; background-color: #34495e; padding: 8px 10px; }
         [data-theme="dark"] .theme-toggle { background-color: var(--card-bg); }
         
         .btn-small { padding: 4px 8px; font-size: 12px; margin-top: 5px; }
@@ -305,6 +305,66 @@
         [data-theme="dark"] #smartFillBtn:hover {
             background-color: rgba(16, 185, 129, 0.3);
         }
+        
+        /* ---------------------------------------------------
+           MOBILE OPTIMIZATION (Calculator Mode)
+           --------------------------------------------------- */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 0 15px 20px 15px; }
+            
+            /* Stack header and controls for easy tapping */
+            .header, .controls {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                gap: 10px;
+                padding: 12px;
+            }
+            .student-info { flex-direction: column; align-items: stretch; }
+            .student-info input { width: 100%; box-sizing: border-box; }
+            .score-display { margin-top: 5px; }
+            
+            .controls { justify-content: center; }
+            .btn-separator { display: none; } /* Hide vertical divider line */
+            .controls button, .controls label.btn { 
+                justify-content: center; 
+                width: 100%; 
+                margin-left: 0 !important; 
+                padding: 12px; 
+                font-size: 1em;
+            }
+            .save-status { text-align: center; margin: 0; }
+            
+            /* Table adjustments for strict grading */
+            .rubric-table th, .rubric-table td { padding: 10px 4px; }
+            .criterion-title { width: 30%; font-size: 0.85em; }
+            .score-cell { width: 70px; }
+            
+            /* HIDE descriptions and titles in Grade Mode on Mobile */
+            .level-cell:not(.edit-mode) .level-title,
+            .level-cell:not(.edit-mode) .level-desc {
+                display: none;
+            }
+            .level-cell:not(.edit-mode) {
+                text-align: center;
+                vertical-align: middle;
+            }
+            .level-cell:not(.edit-mode) .level-pts {
+                font-size: 1.3em; /* Big tap target */
+                margin: 0;
+                padding: 15px 4px;
+                display: block;
+                border: none;
+                background: transparent;
+            }
+            
+            /* Manual score entry mobile friendly */
+            .score-input { width: 100%; font-size: 1.4em; padding: 12px 4px; box-sizing: border-box; }
+
+            /* Floating button scale for mobile */
+            #smartFillBtn { right: 20px; font-size: 0.9em; padding: 10px 15px; }
+        }
                       
     </style>
 </head>
@@ -335,27 +395,27 @@
         </div>
 
         <div class="controls">
-            <button id="toggleEditBtn" class="btn-warning" onclick="toggleEditMode()">✏️ Enter Edit Mode</button>
-            <span style="border-left: 2px solid var(--border); height: 30px; margin: 0 10px;"></span>
+            <button id="toggleEditBtn" class="btn-warning" onclick="toggleEditMode()" title="Enter Edit Mode">✏️ Edit</button>
+            <span class="btn-separator" style="border-left: 2px solid var(--border); height: 30px; margin: 0 10px;"></span>
             
-            <label class="btn btn-info grade-only" for="loadStudentFile">📂 Load Student Data</label>
+            <label class="btn btn-info grade-only" for="loadStudentFile" title="Load Student Data">📂 Load</label>
             <input type="file" id="loadStudentFile" accept=".json">
             
-            <button class="btn grade-only" onclick="selectSaveDirectory()">📁 Set Save Folder</button>
-            <span id="saveStatus" class="save-status grade-only">No folder selected</span>
+            <button class="btn grade-only" onclick="selectSaveDirectory()" title="Set Save Folder">📁 Save</button>
+            <span id="saveStatus" class="save-status grade-only">No folder</span>
             
-            <button class="btn-success grade-only" onclick="exportStudentDataAndReport()">🖨️💾 Export Student (HTML Report & Data)</button>
+            <button class="btn-success grade-only" onclick="exportStudentDataAndReport()" title="Export Student (HTML Report & Data)">🖨️ Export</button>
             
-            <button id="themeToggleBtn" class="btn theme-toggle grade-only" onclick="toggleTheme()">🌙 Dark Mode</button>
+            <button id="themeToggleBtn" class="btn theme-toggle grade-only" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
             
-            <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;">✨ Auto-Build (PDF/Image)</label>
+            <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;" title="Auto-Build (PDF/Image)">✨ Auto</label>
             <input type="file" id="autoBuildFile" accept=".pdf, .png, .jpg, .jpeg">
 
-            <label class="btn edit-only" for="uploadRubric">📂 Load Rubric (.json)</label>
+            <label class="btn edit-only" for="uploadRubric" title="Load Rubric (.json)">📂 Rubric</label>
             <input type="file" id="uploadRubric" accept=".json">
             
-            <button class="edit-only btn-success" onclick="exportRubricTemplate()">💾 Export Template</button>
-            <button onclick="clearGrades()" class="btn-danger edit-only">Reset Grades</button>
+            <button class="edit-only btn-success" onclick="exportRubricTemplate()" title="Export Template">💾 Template</button>
+            <button onclick="clearGrades()" class="btn-danger edit-only" title="Reset Grades">🗑️ Reset</button>
         </div>
     </div>
 
@@ -390,11 +450,11 @@
         if (body.getAttribute('data-theme') === 'dark') {
             body.removeAttribute('data-theme');
             localStorage.setItem('theme', 'light');
-            if(btn) btn.innerText = '🌙 Dark Mode';
+            if(btn) btn.innerText = '🌙';
         } else {
             body.setAttribute('data-theme', 'dark');
             localStorage.setItem('theme', 'dark');
-            if(btn) btn.innerText = '☀️ Light Mode';
+            if(btn) btn.innerText = '☀️';
         }
     }
 
@@ -531,7 +591,7 @@
         if (localStorage.getItem('theme') === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
             const btn = document.getElementById('themeToggleBtn');
-            if(btn) btn.innerText = '☀️ Light Mode';
+            if(btn) btn.innerText = '☀️';
         }
 
         document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
@@ -724,7 +784,8 @@
         const gradeEls = document.querySelectorAll('.grade-only');
 
         if (isEditMode) {
-            btn.innerText = "💾 Save & Exit Edit Mode";
+            btn.innerHTML = "💾 Save";
+            btn.title = "Save & Exit Edit Mode";
             btn.classList.remove('btn-warning');
             btn.classList.add('btn-success');
             addContainer.style.display = 'block';
@@ -733,7 +794,8 @@
             editEls.forEach(el => el.style.display = 'inline-block');
             gradeEls.forEach(el => el.style.display = 'none');
         } else {
-            btn.innerText = "✏️ Enter Edit Mode";
+            btn.innerHTML = "✏️ Edit";
+            btn.title = "Enter Edit Mode";
             btn.classList.remove('btn-success');
             btn.classList.add('btn-warning');
             addContainer.style.display = 'none';
@@ -815,7 +877,7 @@
                     `;
                 } else {
                     td.innerHTML = `
-                        <span class="level-pts">${level.points} pts</span>
+                        <span class="level-pts">${level.points}</span>
                         <span class="level-title">${escapeHTML(level.title)}</span>
                         <div class="level-desc">${escapeHTML(level.desc)}</div>
                     `;
