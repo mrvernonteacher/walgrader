@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WalGrader</title>
+    <title>Dynamic Rubric Grader</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 
@@ -25,7 +25,7 @@
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
             --radius: 8px;
             --card-bg: #ffffff;
-            --header-bg: rgba(255, 255, 255, 0.25); /* User preferred 0.65 */
+            --header-bg: rgba(255, 255, 255, 0.65);
             --input-bg: #ffffff;
             --walton-red: #c8102e;
         }
@@ -45,7 +45,7 @@
             --text-light: #aaa;
             --shadow: 0 4px 10px rgba(0,0,0,0.5);
             --card-bg: #1a1a1a;
-            --header-bg: rgba(26, 26, 26, 0.65); /* User preferred 0.65 */
+            --header-bg: rgba(26, 26, 26, 0.65);
             --input-bg: #2a2a2a;
             --walton-red: #ff6b6b;
         }
@@ -69,10 +69,8 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             transition: background-color 0.3s, box-shadow 0.3s;
-            /* No overflow: hidden here, allowing sticky header to work */
         }
 
-        /* Isolated layer to clip the watermark without breaking sticky elements */
         .watermark-layer {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -82,7 +80,6 @@
             z-index: 0;
         }
 
-        /* Massive Top-Right Quarter Watermark */
         .watermark-layer::before {
             content: "";
             position: absolute;
@@ -106,13 +103,12 @@
         .sticky-top {
             position: sticky; top: 0; background: var(--header-bg); 
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px); /* Safari support */
+            -webkit-backdrop-filter: blur(8px);
             z-index: 1000; padding-top: 30px; padding-bottom: 15px; border-bottom: 2px solid var(--primary);
             margin-bottom: 30px;
             transition: background-color 0.3s;
         }
 
-        /* Ensure content sits above the watermark layer */
         #projectTitleContainer, .header, .controls, .rubric-table, #overallCommentsContainer { 
             position: relative; 
             z-index: 1; 
@@ -124,7 +120,7 @@
 
         .header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.4); /* Replaced solid white with transparent */
+            background: rgba(255, 255, 255, 0.4); 
             padding: 15px 20px; border-radius: var(--radius);
             box-shadow: var(--shadow); border: 1px solid var(--border);
         }
@@ -143,7 +139,7 @@
 
         .controls {
             display: flex; flex-wrap: wrap; gap: 10px; 
-            background: rgba(255, 255, 255, 0.4); /* Replaced solid color with transparent */
+            background: rgba(255, 255, 255, 0.4); 
             padding: 12px 20px;
             border-radius: var(--radius); align-items: center; border: 1px solid var(--border); box-shadow: var(--shadow);
             transition: background-color 0.3s;
@@ -253,9 +249,43 @@
         /* Dark mode overrides for header transparent boxes */
         [data-theme="dark"] .header { background-color: rgba(0, 0, 0, 0.2); border-color: #444; }
         [data-theme="dark"] .controls { background: rgba(0, 0, 0, 0.2); border-color: #444; }
+
+        /* Loading Screen CSS */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary);
+            font-family: inherit;
+        }
+        [data-theme="dark"] #loadingOverlay { background: rgba(18, 18, 18, 0.85); color: #60a5fa; }
+        
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid rgba(0, 47, 108, 0.2);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        [data-theme="dark"] .spinner { border-color: rgba(96, 165, 250, 0.2); border-top-color: #60a5fa; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
     </style>
 </head>
 <body>
+
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <h2 style="margin:0;">AI is reading your rubric...</h2>
+    <p style="margin-top:5px; color:var(--text-light);">This usually takes 5-15 seconds.</p>
+</div>
 
 <div class="container">
     
@@ -289,10 +319,13 @@
             
             <button id="themeToggleBtn" class="btn theme-toggle grade-only" onclick="toggleTheme()">🌙 Dark Mode</button>
             
-            <label class="btn edit-only" for="uploadRubric" style="margin-left: auto;">📂 Load Rubric (.json)</label>
+            <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;">✨ Auto-Build (PDF/Image)</label>
+            <input type="file" id="autoBuildFile" accept=".pdf, .png, .jpg, .jpeg">
+
+            <label class="btn edit-only" for="uploadRubric">📂 Load Rubric (.json)</label>
             <input type="file" id="uploadRubric" accept=".json">
-            <button class="edit-only btn-success" onclick="exportRubricTemplate()">💾 Export Rubric Template</button>
             
+            <button class="edit-only btn-success" onclick="exportRubricTemplate()">💾 Export Template</button>
             <button onclick="clearGrades()" class="btn-danger edit-only">Reset Grades</button>
         </div>
     </div>
@@ -314,6 +347,9 @@
     let isEditMode = false;
     let reportDirectoryHandle = null; 
     let jsonDirectoryHandle = null;
+
+    // YOUR GOOGLE APPS SCRIPT WEB APP URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzp9F_goegloh-FxMFXpGw3FLmkA6kD_nYbNnQs5uBZCr54DLO1euaT2S19hzvARCa_/exec";
 
     function toggleTheme() {
         const body = document.body;
@@ -471,6 +507,7 @@
         updateMaxScore();
         clearGrades();
         
+        // --- EXISTING LOCAL LOADERS ---
         document.getElementById('uploadRubric').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -522,6 +559,56 @@
             };
             reader.readAsText(file);
             e.target.value = ""; 
+        });
+
+        // --- NEW AI AUTO-BUILD LISTENER ---
+        document.getElementById('autoBuildFile').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show Loading Screen
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const dataUrl = event.target.result;
+                const base64Data = dataUrl.split(',')[1];
+                const mimeType = file.type;
+
+                try {
+                    // Send to Google Apps Script
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            fileBase64: base64Data,
+                            mimeType: mimeType
+                        })
+                    });
+
+                    const rawResponse = await response.text();
+                    
+                    // Clean up markdown block if Gemini returns it
+                    let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const newRubric = JSON.parse(cleanJson);
+
+                    if (newRubric && newRubric.criteria) {
+                        currentRubric = newRubric;
+                        clearGrades();
+                        updateMaxScore();
+                        renderRubric();
+                        alert("Rubric successfully generated!");
+                    } else {
+                        throw new Error("Invalid format returned by AI.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Failed to parse rubric. Ensure the file is a clear PDF or Image. Error: " + err.message);
+                } finally {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    e.target.value = ''; // Reset input
+                }
+            };
+            reader.readAsDataURL(file);
         });
     }
 
