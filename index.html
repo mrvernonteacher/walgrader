@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Rubric Grader</title>
+    
+    <style>
+        :root {
+            /* Walton Engineering Color Palette */
+            --primary: #002f6c;       /* Deep Navy Blue */
+            --primary-hover: #001a40;
+            --secondary: #2c529c;     /* Mid Blue */
+            --secondary-hover: #1e3a70;
+            --accent-red: #c8102e;    /* Cardinal Red */
+            --accent-red-hover: #9e0c24;
+            
+            --light: #eef2f7;         /* Soft blue-gray for headers/bars */
+            --border: #bdc3c7;
+            --bg: #f9f9fb;
+            --text-dark: #333;
+            --text-light: #7f8c8d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 0 30px 30px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        
+        /* Sticky Header Navigation */
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1000;
+            padding-top: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        #projectTitleContainer {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        #projectTitleContainer h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.2em;
+        }
+        .student-info input {
+            padding: 8px;
+            font-size: 1em;
+            width: 300px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background-color: #fff;
+            color: #333;
+        }
+        .score-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 6px;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        
+        /* Button Reskinning */
+        button, label.btn {
+            padding: 10px 15px;
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        button:hover, label.btn:hover { background-color: var(--primary); }
+        
+        .btn-success { background-color: var(--primary); }
+        .btn-success:hover { background-color: var(--primary-hover); }
+        
+        .btn-danger { background-color: var(--accent-red); }
+        .btn-danger:hover { background-color: var(--accent-red-hover); }
+        
+        .btn-warning { background-color: var(--accent-red); color: #fff; }
+        .btn-warning:hover { background-color: var(--accent-red-hover); }
+        
+        .btn-info { background-color: var(--secondary); }
+        .btn-info:hover { background-color: var(--primary); }
+
+        .btn-darkmode { background-color: #34495e; }
+        .btn-darkmode:hover { background-color: #2c3e50; }
+        
+        .btn-small { padding: 4px 8px; font-size: 12px; margin-top: 5px; }
+        .btn-icon { padding: 4px 8px; font-size: 14px;}
+        
+        input[type="file"] { display: none; }
+        
+        /* Contextual Display Classes */
+        .edit-only { display: none; }
+        .grade-only { display: inline-block; }
+        
+        .save-status {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: var(--text-light);
+            margin-left: 10px;
+        }
+        .save-status.active { color: var(--primary); }
+
+        .rubric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            table-layout: fixed;
+        }
+        .rubric-table th, .rubric-table td {
+            border: 1px solid var(--border);
+            padding: 12px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+        .rubric-table th { background-color: var(--primary); color: white; transition: background-color 0.3s; }
+        .criterion-title {
+            font-weight: bold;
+            width: 15%;
+            background-color: var(--light);
+            transition: background-color 0.3s;
+        }
+        .level-cell {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .level-cell:hover:not(.edit-mode) { background-color: #e6f0fa; }
+        
+        /* Selected Cell Reskin */
+        .level-cell.selected:not(.edit-mode) {
+            background-color: #e6f0fa;
+            border: 2px solid var(--primary);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .level-title { font-weight: bold; margin-bottom: 5px; display: block; color: var(--primary); }
+        .level-pts { color: var(--accent-red); font-weight: bold; }
+        .level-desc { font-size: 0.9em; margin-top: 5px; }
+        
+        .score-cell {
+            width: 100px;
+            text-align: center;
+            vertical-align: middle !important;
+            background-color: var(--light);
+            transition: background-color 0.3s;
+        }
+        .score-input {
+            width: 60px;
+            padding: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-weight: bold;
+            color: var(--primary);
+            background-color: #fff;
+        }
+        .comments-row td {
+            background-color: transparent;
+            border-top: none;
+            padding: 10px 12px 20px 12px;
+        }
+        .comments-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            resize: none;
+            min-height: 40px;
+            font-family: inherit;
+            box-sizing: border-box;
+            overflow: hidden;
+            background-color: #fff;
+            color: #333;
+        }
+
+        /* Overall Comments Section */
+        #overallCommentsContainer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--light);
+        }
+        #overallCommentsContainer h3 {
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        /* Edit Mode Styles */
+        .edit-input {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-family: inherit;
+            background-color: #fff;
+            color: #333;
+        }
+        .edit-textarea {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            background-color: #fff;
+            color: #333;
+        }
+        .edit-flex { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
+        .edit-pts { width: 60px; font-weight: bold; color: var(--accent-red); }
+        .move-controls { display: flex; gap: 5px; margin-top: 10px; }
+
+
+        /* ---------------------------------------------------
+           DARK MODE OVERRIDES (Mapped to Walton Colors)
+           --------------------------------------------------- */
+        [data-theme="dark"] {
+            --bg: #121212;
+            --light: #1e1e1e;
+            --border: #333333;
+            --text-dark: #e0e0e0;
+            --text-light: #aaa;
+        }
+        [data-theme="dark"] body { background-color: var(--bg); color: var(--text-dark); }
+        [data-theme="dark"] .container { background-color: #1a1a1a; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        [data-theme="dark"] .sticky-top { background-color: #1a1a1a; border-bottom: 2px solid #004080; }
+        
+        [data-theme="dark"] #projectTitleContainer h1, 
+        [data-theme="dark"] .student-info label, 
+        [data-theme="dark"] .score-display { color: var(--text-dark); }
+        [data-theme="dark"] #totalScore { color: #60a5fa; }
+        [data-theme="dark"] .save-status { color: #aaa; }
+        [data-theme="dark"] .save-status.active { color: #60a5fa; }
+        
+        [data-theme="dark"] .controls { background: #222222; }
+        [data-theme="dark"] input[type="text"], 
+        [data-theme="dark"] input[type="number"], 
+        [data-theme="dark"] textarea { background-color: #2a2a2a; color: var(--text-dark); border-color: #444; }
+        
+        [data-theme="dark"] .rubric-table th { background-color: #001a40; border-color: #333; }
+        [data-theme="dark"] .rubric-table td { border-color: #333; }
+        [data-theme="dark"] .criterion-title, 
+        [data-theme="dark"] .score-cell { background-color: #222222; }
+        
+        /* Criterion title contrast in dark mode */
+        [data-theme="dark"] .criterion-title { color: #60a5fa; font-weight: 700; letter-spacing: 0.02em; }
+        
+        [data-theme="dark"] .level-cell { background-color: #1a1a1a; }
+        [data-theme="dark"] .level-cell:hover:not(.edit-mode) { background-color: #2a2a2a; }
+        [data-theme="dark"] .level-cell.selected:not(.edit-mode) { background-color: #002f6c; border: 2px solid #60a5fa; box-shadow: none; }
+        
+        [data-theme="dark"] .level-title { color: #60a5fa; } /* Bright blue for readability */
+        [data-theme="dark"] .level-pts { color: #ff6b6b; }  /* Bright red for readability */
+        
+        [data-theme="dark"] .comments-row td { background-color: transparent; }
+        [data-theme="dark"] #overallCommentsContainer h3 { color: #60a5fa; }
+        [data-theme="dark"] #overallCommentsContainer { border-top-color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="pdfContainer">
+    
+    <div class="sticky-top">
+        <div id="projectTitleContainer">
+            </div>
+
+        <div class="header">
+            <div class="student-info">
+                <label for="studentName">Student/Group Name:</label>
+                <input type="text" id="studentName" placeholder="Enter name(s) here...">
+            </div>
+            <div class="score-display">
+                Total: <span id="totalScore">0</span> / <span id="maxScore">105</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="toggleEditBtn" class="btn-warning" onclick="toggleEditMode()">✏️ Enter Edit Mode</button>
+            <span style="border-left: 2px solid var(--border); height: 30px; margin: 0 10px;"></span>
+            
+            <label class="btn btn-info grade-only" for="loadStudentFile">📂 Load Student Data</label>
+            <input type="file" id="loadStudentFile" accept=".json">
+            
+            <button class="btn grade-only" onclick="selectSaveDirectory()" style="background-color: #34495e;">📁 Set Save Folder</button>
+            <span id="saveStatus" class="save-status grade-only">No folder selected</span>
+            
+            <button class="btn-success grade-only" onclick="exportStudentDataAndReport()" style="margin-left: auto;">🖨️💾 Export Student</button>
+
+            <button id="themeToggleBtn" class="btn btn-darkmode grade-only" onclick="toggleTheme()">🌙 Dark Mode</button>
+            
+            <label class="btn edit-only" for="uploadRubric" style="margin-left: auto;">📂 Load Rubric (.json)</label>
+            <input type="file" id="uploadRubric" accept=".json">
+            <button class="btn-success edit-only" onclick="exportRubricTemplate()">💾 Export Rubric Template</button>
+            
+            <button onclick="clearGrades()" class="btn-danger edit-only">Reset Grades</button>
+        </div>
+    </div>
+
+    <table class="rubric-table" id="rubricTable">
+        </table>
+    
+    <div id="addCriterionContainer" style="display: none; margin-bottom: 20px; text-align: center;">
+        <button class="btn-success" onclick="addCriterion()">➕ Add New Criteria Row</button>
+    </div>
+
+    <div id="overallCommentsContainer">
+        <h3>Overall Comments</h3>
+        <textarea id="overallCommentsInput" class="comments-input" placeholder="Type overall project feedback here..." oninput="updateOverallComment(this)"></textarea>
+    </div>
+
+</div>
+
+<script>
+    let isEditMode = false;
+    let reportDirectoryHandle = null; 
+    let jsonDirectoryHandle = null;
+
+    // Theme Toggle Logic
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('themeToggleBtn');
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            if(btn) btn.innerText = '🌙 Dark Mode';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            if(btn) btn.innerText = '☀️ Light Mode';
+        }
+    }
+
+    // Full restored "Imagine the Future" Rubric
+    let currentRubric = {
+        title: "Imagine the Future",
+        criteria: [
+            {
+                name: "Title",
+                levels: [
+                    { points: 5, title: "Jedi Master", desc: "Project Title, Course, Period, date, Rendered picture, Names" },
+                    { points: 3, title: "Padwan Learner", desc: "5 of 6 requirements" },
+                    { points: 1, title: "Sith Apprentice", desc: "Fewer than 5 requirements" },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Initial Research",
+                levels: [
+                    { points: 5, title: "Jedi Master", desc: "Basic description of each listed material. At least one material per person not on list." },
+                    { points: 3, title: "Padwan Learner", desc: "Missing 1 req" },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Brainstorming List",
+                levels: [
+                    { points: 5, title: "Jedi Master", desc: "List at least 5 inventions per person. Include ideas for at least 2 unique materials per person." },
+                    { points: 3, title: "Padwan Learner", desc: "Missing 1 req" },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Detailed Research",
+                levels: [
+                    { points: 5, title: "Jedi Knight", desc: "Missing a few details" },
+                    { points: 4, title: "Jedi Master", desc: "Details a.-g. listed for each material. At least one detailed research per group member." },
+                    { points: 3, title: "Padwan Learner", desc: "Some research done, but mostly does not address prompts a-g." },
+                    { points: 1.56, title: "Sith Apprentice", desc: "Little research done" },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Concept Sketches",
+                levels: [
+                    { points: 10, title: "Jedi Master", desc: "Concept sketches of 5 top ideas. Includes annotations explaining function, shading, penciling." },
+                    { points: 8, title: "Jedi Knight", desc: "Lacking a little in detail or needs more annotations." },
+                    { points: 5, title: "Padwan Learner", desc: "Missing 1 requirement" },
+                    { points: 2.5, title: "Sith Apprentice", desc: "Missing more than 1 requirement and/or lacking quality." },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Decision Matrix",
+                levels: [
+                    { points: 10, title: "Jedi Master", desc: "Uses template. Effectively demonstrates considerations. Process clearly communicated. Choice justified." },
+                    { points: 8, title: "Jedi Knight", desc: "Uses Template. Somewhat effective. Choice marginally justified." },
+                    { points: 2, title: "Youngling", desc: "Missing elements or poorly communicates selection process." },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Sales Pitch Video",
+                levels: [
+                    { points: 20, title: "Yoda", desc: "Jedi Master + WOW factor. Amazing video production/sales pitch!" },
+                    { points: 18, title: "Jedi Master", desc: "Includes all members, under 1 min, answers questions, includes visuals. Appropriate and fun." },
+                    { points: 15, title: "Jedi Knight", desc: "Missing some detail, but technically addresses criteria." },
+                    { points: 10, title: "Padwan Learner", desc: "Missing 1 req or severely lacking in detail" },
+                    { points: 5, title: "Sith Apprentice", desc: "Missing multiple criteria or little effort." },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Final Annotated Sketch",
+                levels: [
+                    { points: 10, title: "Jedi Master", desc: "Overall sketch and detail sketch of functions, titles, labels. Title block complete." },
+                    { points: 8, title: "Jedi Knight", desc: "Lacking a little in detail or needs more annotations." },
+                    { points: 5, title: "Padwan Learner", desc: "Missing 1 requirement" },
+                    { points: 2.5, title: "Sith Apprentice", desc: "Missing >1 req or lacking quality." },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Final CAD Model",
+                levels: [
+                    { points: 15, title: "Jedi Master", desc: "Above and beyond, exquisite detail, excellent dimensioning. (Bonus level)" },
+                    { points: 10, title: "Jedi Knight", desc: "Detailed & accurate Multiview, iso/front views, parts list with mass/material. Rendered picture." },
+                    { points: 8, title: "Padwan Learner", desc: "Missing 1 req or lacking detail." },
+                    { points: 5, title: "Sith Apprentice", desc: "Missing >1 req." },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "CAD Material Screenshot",
+                levels: [
+                    { points: 5, title: "Full Marks", desc: "Screenshot of CAD Material named 'Material Name'" },
+                    { points: 3, title: "Padwan Learner", desc: "Missing any 1 req" },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Test plan",
+                levels: [
+                    { points: 5, title: "Full Marks", desc: "Written step-by-step plan for performing a material test." },
+                    { points: 3, title: "Padwan Learner", desc: "Lacking in detail or little thought put into process." },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Project Reflection",
+                levels: [
+                    { points: 5, title: "Jedi Master", desc: "Well thought out answers using 3-4 complete sentences per question." },
+                    { points: 3, title: "Padwan Learner", desc: "Lacking in detail" },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            },
+            {
+                name: "Citations",
+                levels: [
+                    { points: 5, title: "Jedi Master", desc: "APA Citations for research, more than 3 citations" },
+                    { points: 3, title: "Padwan Learner", desc: "Missing 1 req" },
+                    { points: 1, title: "Sith Apprentice", desc: "Missing >1 req" },
+                    { points: 0, title: "Sith Lord", desc: "Missing." }
+                ]
+            }
+        ]
+    };
+
+    let scores = {};
+    let comments = {};
+    let isGraded = {}; 
+    let overallComment = "";
+
+    function init() {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            const btn = document.getElementById('themeToggleBtn');
+            if(btn) btn.innerText = '☀️ Light Mode';
+        }
+
+        document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.grade-only').forEach(el => el.style.display = 'inline-block');
+
+        updateMaxScore();
+        clearGrades();
+        
+        document.getElementById('uploadRubric').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    currentRubric = JSON.parse(e.target.result);
+                    clearGrades();
+                    updateMaxScore();
+                    renderRubric();
+                } catch (err) {
+                    alert('Error parsing Rubric JSON file.');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ""; 
+        });
+
+        document.getElementById('loadStudentFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.type === "StudentGradeRecord") {
+                        currentRubric = data.rubric;
+                        scores = data.scores || {};
+                        comments = data.comments || {};
+                        isGraded = data.isGraded || {};
+                        document.getElementById('studentName').value = data.studentName || "";
+                        
+                        overallComment = data.overallComment || "";
+                        const ocInput = document.getElementById('overallCommentsInput');
+                        if (ocInput) {
+                            ocInput.value = overallComment;
+                            ocInput.style.height = 'auto';
+                            ocInput.style.height = ocInput.scrollHeight + 'px';
+                        }
+
+                        updateMaxScore();
+                        renderRubric();
+                    } else {
+                        alert('Invalid student data file.');
+                    }
+                } catch (err) {
+                    alert('Error parsing Student JSON file.');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ""; 
+        });
+    }
+
+    function updateMaxScore() {
+        let max = currentRubric.criteria.reduce((total, crit) => {
+            if (!crit.levels || crit.levels.length === 0) return total;
+            return total + Math.max(...crit.levels.map(l => l.points));
+        }, 0);
+        document.getElementById('maxScore').innerText = max;
+    }
+
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        const btn = document.getElementById('toggleEditBtn');
+        const addContainer = document.getElementById('addCriterionContainer');
+        const overallContainer = document.getElementById('overallCommentsContainer');
+        
+        const editEls = document.querySelectorAll('.edit-only');
+        const gradeEls = document.querySelectorAll('.grade-only');
+
+        if (isEditMode) {
+            btn.innerText = "💾 Save & Exit Edit Mode";
+            btn.classList.remove('btn-warning');
+            btn.classList.add('btn-success');
+            addContainer.style.display = 'block';
+            overallContainer.style.display = 'none'; 
+            
+            editEls.forEach(el => el.style.display = 'inline-block');
+            gradeEls.forEach(el => el.style.display = 'none');
+        } else {
+            btn.innerText = "✏️ Enter Edit Mode";
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-warning');
+            addContainer.style.display = 'none';
+            overallContainer.style.display = 'block';
+            updateMaxScore(); 
+            
+            editEls.forEach(el => el.style.display = 'none');
+            gradeEls.forEach(el => el.style.display = 'inline-block');
+        }
+        renderRubric();
+    }
+
+    function renderRubric() {
+        const titleContainer = document.getElementById('projectTitleContainer');
+        if (isEditMode) {
+            titleContainer.innerHTML = `<input type="text" class="edit-input" style="font-size: 2em; font-weight: bold; text-align: center; color: var(--primary);" value="${escapeHTML(currentRubric.title || 'Untitled Project')}" onchange="currentRubric.title = this.value">`;
+        } else {
+            titleContainer.innerHTML = `<h1>${escapeHTML(currentRubric.title || 'Untitled Project')}</h1>`;
+        }
+
+        const table = document.getElementById('rubricTable');
+        table.innerHTML = '';
+
+        let maxCols = 0;
+        if (currentRubric.criteria.length > 0) {
+            maxCols = Math.max(...currentRubric.criteria.map(c => c.levels.length));
+        }
+
+        currentRubric.criteria.forEach((crit, critIndex) => {
+            if (scores[critIndex] === undefined) scores[critIndex] = 0;
+            if (comments[critIndex] === undefined) comments[critIndex] = '';
+            if (isGraded[critIndex] === undefined) isGraded[critIndex] = false;
+
+            const tr = document.createElement('tr');
+            
+            const titleTd = document.createElement('td');
+            titleTd.className = 'criterion-title';
+            
+            if (isEditMode) {
+                let addLevelBtn = '';
+                if (crit.levels.length === 0) {
+                    addLevelBtn = `<button class="btn-info btn-small" onclick="insertLevel(${critIndex}, 0)" style="width:100%; margin-top:5px;">➕ Add Level</button>`;
+                }
+                titleTd.innerHTML = `
+                    <input type="text" class="edit-input" style="font-weight:bold;" value="${escapeHTML(crit.name)}" onchange="currentRubric.criteria[${critIndex}].name = this.value">
+                    <div class="move-controls">
+                        <button class="btn btn-icon" onclick="moveCriterion(${critIndex}, -1)" ${critIndex === 0 ? 'disabled' : ''}>⬆️</button>
+                        <button class="btn btn-icon" onclick="moveCriterion(${critIndex}, 1)" ${critIndex === currentRubric.criteria.length - 1 ? 'disabled' : ''}>⬇️</button>
+                    </div>
+                    <button class="btn-danger btn-small" onclick="removeCriterion(${critIndex})" style="width:100%; margin-top:5px;">🗑️ Delete Row</button>
+                    ${addLevelBtn}
+                `;
+            } else {
+                titleTd.innerText = crit.name;
+            }
+            tr.appendChild(titleTd);
+
+            crit.levels.forEach((level, levelIndex) => {
+                const td = document.createElement('td');
+                td.className = 'level-cell' + (isEditMode ? ' edit-mode' : '');
+                td.id = `cell-${critIndex}-${levelIndex}`;
+                
+                if (isEditMode) {
+                    td.innerHTML = `
+                        <div class="edit-flex">
+                            <input type="number" step="0.1" class="edit-input edit-pts" value="${level.points}" onchange="currentRubric.criteria[${critIndex}].levels[${levelIndex}].points = parseFloat(this.value) || 0"> <span>pts</span>
+                        </div>
+                        <input type="text" class="edit-input level-title" value="${escapeHTML(level.title)}" onchange="currentRubric.criteria[${critIndex}].levels[${levelIndex}].title = this.value">
+                        <textarea class="edit-textarea" onchange="currentRubric.criteria[${critIndex}].levels[${levelIndex}].desc = this.value">${escapeHTML(level.desc)}</textarea>
+                        
+                        <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 8px;">
+                            <button class="btn-info btn-small btn-icon" onclick="insertLevel(${critIndex}, ${levelIndex})" title="Add level before">➕</button>
+                            <button class="btn-danger btn-small" onclick="removeLevel(${critIndex}, ${levelIndex})" style="flex-grow: 1;">❌ Remove</button>
+                            <button class="btn-info btn-small btn-icon" onclick="insertLevel(${critIndex}, ${levelIndex + 1})" title="Add level after">➕</button>
+                        </div>
+                    `;
+                } else {
+                    td.innerHTML = `
+                        <span class="level-pts">${level.points} pts</span>
+                        <span class="level-title">${escapeHTML(level.title)}</span>
+                        <div class="level-desc">${escapeHTML(level.desc)}</div>
+                    `;
+                    td.onclick = () => selectScore(critIndex, levelIndex, level.points);
+                    if (isGraded[critIndex] && scores[critIndex] === level.points) {
+                        td.classList.add('selected');
+                    }
+                }
+                tr.appendChild(td);
+            });
+
+            // Fill empty cells
+            let emptyCellsRequired = maxCols - crit.levels.length;
+            for (let i = 0; i < emptyCellsRequired; i++) {
+                const emptyTd = document.createElement('td');
+                tr.appendChild(emptyTd);
+            }
+
+            // End column rendering
+            if (isEditMode) {
+                const emptyEndTd = document.createElement('td');
+                emptyEndTd.className = 'score-cell'; 
+                emptyEndTd.innerHTML = `<div style="color: #999; font-size: 0.8em; margin-top: 20px;">Use ➕ buttons in cells to add columns</div>`;
+                tr.appendChild(emptyEndTd);
+            } else {
+                const scoreTd = document.createElement('td');
+                scoreTd.className = 'score-cell';
+                scoreTd.innerHTML = `
+                    <div style="color: var(--primary);">Score</div>
+                    <input type="number" class="score-input" id="score-input-${critIndex}" step="0.5" value="${scores[critIndex]}" oninput="manualScoreUpdate(${critIndex}, this.value)">
+                `;
+                tr.appendChild(scoreTd);
+            }
+
+            table.appendChild(tr);
+
+            if (!isEditMode) {
+                const commentTr = document.createElement('tr');
+                commentTr.className = 'comments-row';
+                const commentTd = document.createElement('td');
+                commentTd.colSpan = maxCols + 2; 
+                commentTd.innerHTML = `<textarea class="comments-input" placeholder="Comments for ${escapeHTML(crit.name)}..." oninput="updateRowComment(${critIndex}, this)">${escapeHTML(comments[critIndex])}</textarea>`;
+                commentTr.appendChild(commentTd);
+                table.appendChild(commentTr);
+            }
+        });
+
+        if (!isEditMode) {
+            updateTotalDisplay();
+            document.querySelectorAll('.comments-input').forEach(ta => {
+                ta.style.height = 'auto';
+                ta.style.height = ta.scrollHeight + 'px';
+            });
+        }
+    }
+
+    // --- Interaction Logic ---
+
+    function moveCriterion(index, direction) {
+        if (direction === -1 && index === 0) return;
+        if (direction === 1 && index === currentRubric.criteria.length - 1) return;
+
+        const newIndex = index + direction;
+        
+        const tempCrit = currentRubric.criteria[index];
+        currentRubric.criteria[index] = currentRubric.criteria[newIndex];
+        currentRubric.criteria[newIndex] = tempCrit;
+
+        const tempScore = scores[index];
+        scores[index] = scores[newIndex];
+        scores[newIndex] = tempScore;
+
+        const tempComment = comments[index];
+        comments[index] = comments[newIndex];
+        comments[newIndex] = tempComment;
+        
+        const tempGraded = isGraded[index];
+        isGraded[index] = isGraded[newIndex];
+        isGraded[newIndex] = tempGraded;
+
+        renderRubric();
+    }
+
+    function insertLevel(critIndex, insertIndex) {
+        currentRubric.criteria[critIndex].levels.splice(insertIndex, 0, { points: 0, title: "New Level", desc: "" });
+        renderRubric();
+    }
+
+    function removeLevel(critIndex, levelIndex) {
+        currentRubric.criteria[critIndex].levels.splice(levelIndex, 1);
+        renderRubric();
+    }
+
+    function addCriterion() {
+        currentRubric.criteria.push({
+            name: "New Criteria",
+            levels: [ { points: 5, title: "Excellent", desc: "" } ]
+        });
+        renderRubric();
+    }
+
+    function removeCriterion(critIndex) {
+        if(confirm("Are you sure you want to delete this entire row?")) {
+            currentRubric.criteria.splice(critIndex, 1);
+            
+            delete scores[critIndex];
+            delete comments[critIndex];
+            delete isGraded[critIndex];
+            
+            let newScores = {};
+            let newComments = {};
+            let newGraded = {};
+            currentRubric.criteria.forEach((_, i) => {
+                newScores[i] = scores[i >= critIndex ? i + 1 : i] || 0;
+                newComments[i] = comments[i >= critIndex ? i + 1 : i] || '';
+                newGraded[i] = isGraded[i >= critIndex ? i + 1 : i] || false;
+            });
+            scores = newScores;
+            comments = newComments;
+            isGraded = newGraded;
+            
+            renderRubric();
+        }
+    }
+
+    function selectScore(critIndex, levelIndex, points) {
+        if(isEditMode) return;
+        
+        isGraded[critIndex] = true;
+        
+        currentRubric.criteria[critIndex].levels.forEach((_, i) => {
+            const cell = document.getElementById(`cell-${critIndex}-${i}`);
+            if(cell) cell.classList.remove('selected');
+        });
+        const activeCell = document.getElementById(`cell-${critIndex}-${levelIndex}`);
+        if(activeCell) activeCell.classList.add('selected');
+        
+        document.getElementById(`score-input-${critIndex}`).value = points;
+        scores[critIndex] = parseFloat(points);
+        updateTotalDisplay();
+    }
+
+    function manualScoreUpdate(critIndex, value) {
+        let val = parseFloat(value);
+        if (isNaN(val)) val = 0;
+        scores[critIndex] = val;
+        isGraded[critIndex] = true;
+
+        currentRubric.criteria[critIndex].levels.forEach((_, i) => {
+            const cell = document.getElementById(`cell-${critIndex}-${i}`);
+            if(cell) cell.classList.remove('selected');
+        });
+        updateTotalDisplay();
+    }
+
+    function updateRowComment(critIndex, element) {
+        comments[critIndex] = element.value;
+        element.style.height = 'auto';
+        element.style.height = element.scrollHeight + 'px';
+    }
+
+    function updateOverallComment(element) {
+        overallComment = element.value;
+        element.style.height = 'auto';
+        element.style.height = element.scrollHeight + 'px';
+    }
+
+    function updateTotalDisplay() {
+        let total = 0;
+        for (let key in scores) {
+            total += scores[key];
+        }
+        document.getElementById('totalScore').innerText = total;
+    }
+
+    function clearGrades() {
+        document.getElementById('studentName').value = '';
+        currentRubric.criteria.forEach((crit, idx) => {
+            scores[idx] = 0;
+            comments[idx] = '';
+            isGraded[idx] = false;
+        });
+        
+        overallComment = "";
+        const ocInput = document.getElementById('overallCommentsInput');
+        if (ocInput) {
+            ocInput.value = "";
+            ocInput.style.height = 'auto';
+        }
+        
+        renderRubric();
+        window.scrollTo(0, 0); 
+    }
+
+    // --- HTML Report Generator ---
+    function generateStandaloneReport(studentName, projectTitle, totalScore) {
+        let maxCols = 0;
+        if (currentRubric.criteria.length > 0) {
+            maxCols = Math.max(...currentRubric.criteria.map(c => c.levels.length));
+        }
+
+        let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHTML(studentName)} - ${escapeHTML(projectTitle)}</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.5; color: #333; max-width: 1100px; margin: 0 auto; padding: 40px; background: #ffffff; }
+        .header { text-align: center; border-bottom: 3px solid #002f6c; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { color: #002f6c; margin: 0 0 10px 0; font-size: 2.2em; font-weight: bold; }
+        h2 { color: #555; margin: 0; font-size: 1.4em; font-weight: normal; }
+        .total-score { font-size: 1.8em; font-weight: bold; color: #c8102e; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; table-layout: fixed; }
+        th, td { border: 1px solid #bdc3c7; padding: 12px; vertical-align: top; font-size: 0.9em; word-wrap: break-word; }
+        .crit-title { font-weight: bold; width: 15%; background-color: #eef2f7; color: #002f6c; border-right: none; }
+        .level-cell { position: relative; }
+        .selected { background-color: #e6f0fa; border: 2px solid #002f6c; border-left: 1px solid #002f6c; }
+        .selected::before { content: '✓'; position: absolute; top: 5px; right: 8px; color: #002f6c; font-weight: bold; font-size: 1.2em; }
+        .level-pts { color: #c8102e; font-weight: bold; display: block; margin-bottom: 5px; background: #f9f9fb; border: 1px solid #bdc3c7; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+        .level-title { font-weight: bold; color: #002f6c; display: block; margin-bottom: 5px; }
+        .score-col { font-weight: bold; text-align: center; width: 80px; background-color: #eef2f7; color: #002f6c; font-size: 1.1em; vertical-align: middle; border-left: none; }
+        .comment-row td { background-color: white; padding: 15px; border-top: none; }
+        .comment-box { border-left: 4px solid #2c529c; padding-left: 15px; margin: 0; white-space: pre-wrap; font-style: italic; background: #f9f9fb; padding: 10px 15px; border-radius: 0 4px 4px 0; }
+        .overall-comments { margin-top: 30px; background: #f9f9fb; padding: 20px; border-radius: 6px; border-left: 5px solid #002f6c; border: 1px solid #bdc3c7; border-left-width: 5px; }
+        .overall-comments h3 { color: #002f6c; margin-top: 0; margin-bottom: 15px; }
+        .overall-comments div { white-space: pre-wrap; }
+        
+        @media print {
+            body { padding: 0; max-width: 100%; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            .selected { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .crit-title, .score-col, .level-pts, .comment-box, .overall-comments { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${escapeHTML(projectTitle)}</h1>
+        <h2>Student: <strong>${escapeHTML(studentName)}</strong></h2>
+        <div class="total-score">Total Score: ${totalScore} / ${document.getElementById('maxScore').innerText}</div>
+    </div>
+    <table>`;
+
+        currentRubric.criteria.forEach((crit, i) => {
+            html += `<tr><td class="crit-title">${escapeHTML(crit.name)}</td>`;
+            
+            crit.levels.forEach((level) => {
+                let isSelected = (isGraded[i] && scores[i] === level.points) ? 'selected' : '';
+                html += `<td class="level-cell ${isSelected}">
+                            <span class="level-pts">${level.points} pts</span>
+                            <span class="level-title">${escapeHTML(level.title)}</span>
+                            <span>${escapeHTML(level.desc)}</span>
+                         </td>`;
+            });
+
+            // Fill empty cells if the row is shorter than max
+            let emptyCellsRequired = maxCols - crit.levels.length;
+            for (let j = 0; j < emptyCellsRequired; j++) {
+                html += `<td></td>`;
+            }
+
+            html += `<td class="score-col">${scores[i]}</td></tr>`;
+
+            // Row Comments
+            if (comments[i] && comments[i].trim() !== '') {
+                html += `<tr class="comment-row"><td colspan="${maxCols + 2}">
+                            <div class="comment-box"><strong>Feedback:</strong><br>${escapeHTML(comments[i])}</div>
+                         </td></tr>`;
+            }
+        });
+
+        html += `</table>`;
+
+        // Overall Comments
+        if (overallComment && overallComment.trim() !== '') {
+            html += `<div class="overall-comments">
+                        <h3>Overall Project Feedback</h3>
+                        <div>${escapeHTML(overallComment)}</div>
+                     </div>`;
+        }
+
+        html += `</body></html>`;
+        return html;
+    }
+
+
+    // --- File IO / Directory Handling ---
+
+    async function selectSaveDirectory() {
+        try {
+            // Request permission to the main directory (for Reports)
+            reportDirectoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+            
+            // Automatically grab (or create) the 'backups' subfolder for JSONs
+            jsonDirectoryHandle = await reportDirectoryHandle.getDirectoryHandle('backups', { create: true });
+            
+            const statusEl = document.getElementById('saveStatus');
+            statusEl.innerText = `Saving Reports to: ${reportDirectoryHandle.name} | JSONs to: backups/`;
+            statusEl.classList.add('active');
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Directory selection failed', error);
+                alert("Could not access the folder. Please try again.");
+            }
+        }
+    }
+
+    async function silentWriteFile(handle, filename, blobData) {
+        if (!handle) return false;
+        try {
+            const fileHandle = await handle.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blobData);
+            await writable.close();
+            return true;
+        } catch (error) {
+            console.error(`Failed to write ${filename}`, error);
+            return false;
+        }
+    }
+
+    function fallbackDownload(filename, blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async function exportStudentDataAndReport() {
+        let studentName = document.getElementById('studentName').value.trim();
+        let missingGrades = [];
+        
+        currentRubric.criteria.forEach((crit, idx) => {
+            if (!isGraded[idx]) {
+                missingGrades.push(crit.name);
+            }
+        });
+
+        if (!studentName || missingGrades.length > 0) {
+            let warningMsg = "Hold on! You have missing information:\n\n";
+            if (!studentName) warningMsg += "• Student/Group Name is blank\n";
+            if (missingGrades.length > 0) {
+                warningMsg += "• Unscored Categories:\n   - " + missingGrades.join("\n   - ") + "\n";
+            }
+            warningMsg += "\nDo you want to export the incomplete grade anyway?";
+            
+            if (!confirm(warningMsg)) {
+                return; 
+            }
+        }
+
+        if (!reportDirectoryHandle && window.showDirectoryPicker) {
+            alert("Please select a master folder to save your files into first.");
+            await selectSaveDirectory();
+            if (!reportDirectoryHandle) return; 
+        }
+
+        if(isEditMode) toggleEditMode();
+
+        let safeStudent = studentName ? studentName.replace(/[^a-z0-9\s]/gi, '_').trim() : "Unnamed";
+        let projectTitle = currentRubric.title || "Untitled Project";
+        let safeProject = projectTitle.replace(/[^a-z0-9\s]/gi, '_').trim();
+        let totalScore = document.getElementById('totalScore').innerText;
+
+        let jsonFilename = `${safeStudent} - ${safeProject}.json`;
+        let reportFilename = `${safeStudent} - ${safeProject} - ${totalScore}.html`;
+
+        // 1. Generate JSON Blob
+        const exportData = {
+            type: "StudentGradeRecord",
+            studentName: studentName,
+            projectTitle: projectTitle,
+            rubric: currentRubric,
+            scores: scores,
+            comments: comments,
+            overallComment: overallComment,
+            isGraded: isGraded
+        };
+        const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+
+        // 2. Generate HTML Report Blob
+        const htmlReportString = generateStandaloneReport(studentName, projectTitle, totalScore);
+        const reportBlob = new Blob([htmlReportString], { type: 'text/html' });
+
+        try {
+            // Save both files silently to their designated folders
+            if (reportDirectoryHandle && jsonDirectoryHandle) {
+                const jsonSuccess = await silentWriteFile(jsonDirectoryHandle, jsonFilename, jsonBlob);
+                const reportSuccess = await silentWriteFile(reportDirectoryHandle, reportFilename, reportBlob);
+                
+                if (!jsonSuccess || !reportSuccess) {
+                    alert("There was an issue saving directly to the folder. Downloading via browser instead.");
+                    fallbackDownload(jsonFilename, jsonBlob);
+                    fallbackDownload(reportFilename, reportBlob);
+                }
+            } else {
+                // Older browser fallback
+                fallbackDownload(jsonFilename, jsonBlob);
+                fallbackDownload(reportFilename, reportBlob);
+            }
+
+            // Success -> Clear Board
+            clearGrades();
+            
+        } catch (error) {
+            console.error("Export Error", error);
+            alert("An error occurred while generating the files.");
+        }
+    }
+
+    async function exportRubricTemplate() {
+        const dataStr = JSON.stringify(currentRubric, null, 2);
+        const filename = (currentRubric.title || "Rubric").replace(/[^a-z0-9\s]/gi, '_').trim() + "_Template.json";
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        fallbackDownload(filename, blob);
+    }
+
+    function escapeHTML(str) {
+        if(!str) return '';
+        return str.toString().replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
