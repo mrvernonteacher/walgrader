@@ -167,18 +167,26 @@
             transition: all 0.2s; margin: 0;
         }
         button:hover, label.btn:hover { background-color: var(--primary); transform: translateY(-1px); }
-        [data-theme="dark"] button { background-color: var(--input-bg); border: 1px solid var(--border); color: var(--text-dark); }
-        [data-theme="dark"] button:hover { background-color: var(--border); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        [data-theme="dark"] button:not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-purple):not(.btn-darkred) { 
+            background-color: var(--input-bg); border: 1px solid var(--border); color: var(--text-dark); 
+        }
+        [data-theme="dark"] button:hover:not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-purple):not(.btn-darkred) { 
+            background-color: var(--border); 
+        }
         
-        .btn-success { background-color: var(--primary); }
+        .btn-success { background-color: var(--primary); color: white;}
         [data-theme="dark"] .btn-success { background-color: rgba(96, 165, 250, 0.15); color: #93c5fd; border-color: rgba(96, 165, 250, 0.3); }
-        .btn-danger { background-color: var(--walton-red); }
+        .btn-danger { background-color: var(--walton-red); color: white;}
         [data-theme="dark"] .btn-danger { background-color: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
         .btn-warning { background-color: var(--walton-red); color: white; }
         [data-theme="dark"] .btn-warning { background-color: rgba(248, 113, 113, 0.15); color: #fca5a5; border-color: rgba(248, 113, 113, 0.3); }
-        .btn-info { background-color: var(--secondary); }
+        .btn-info { background-color: var(--secondary); color: white;}
         .btn-purple { background-color: #8e44ad; color: white; }
+        [data-theme="dark"] .btn-purple { background-color: rgba(168, 85, 247, 0.15); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
         .btn-darkred { background-color: #900c3f; color: white; }
+        [data-theme="dark"] .btn-darkred { background-color: rgba(225, 29, 72, 0.15); color: #fda4af; border: 1px solid rgba(225, 29, 72, 0.3); }
+        
         .theme-toggle { margin-left: auto; background-color: #34495e; padding: 8px 10px; }
         [data-theme="dark"] .theme-toggle { background-color: var(--card-bg); }
         
@@ -263,10 +271,6 @@
         .edit-pts { width: 60px; font-weight: bold; color: var(--walton-red); }
         .move-controls { display: flex; gap: 4px; margin-top: 8px; }
 
-        /* Dark mode overrides for header transparent boxes */
-        [data-theme="dark"] .header { background: rgba(0, 0, 0, 0.2); border-color: #444; }
-        [data-theme="dark"] .controls { background: rgba(0, 0, 0, 0.2); border-color: #444; }
-
         /* Loading Screen CSS */
         #loadingOverlay {
             display: none;
@@ -310,40 +314,66 @@
         #smartFillBtn:hover { transform: translateY(-3px) scale(1.02); background-color: var(--primary); }
         [data-theme="dark"] #smartFillBtn { background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
         [data-theme="dark"] #smartFillBtn:hover { background-color: rgba(16, 185, 129, 0.3); }
+
+        /* --- TEACH AI MODAL CSS --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 10000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background: var(--card-bg); padding: 30px; border-radius: var(--radius);
+            width: 600px; max-width: 90%; box-shadow: var(--shadow);
+            border: 1px solid var(--border); text-align: left;
+        }
+        .modal-content h3 { margin-top: 0; color: var(--primary); }
+        .drop-zone {
+            border: 2px dashed var(--primary); padding: 15px; text-align: center;
+            border-radius: var(--radius); cursor: pointer;
+            transition: all 0.2s; background: var(--input-bg); color: var(--text-dark);
+            font-weight: bold; display: flex; align-items: center; justify-content: center;
+            min-height: 60px; word-break: break-word; font-size: 0.9em;
+        }
+        .drop-zone.dragover { background: rgba(0, 47, 108, 0.1); transform: scale(1.02); }
+        [data-theme="dark"] .drop-zone.dragover { background: rgba(96, 165, 250, 0.15); }
+        .drop-zone.has-file { border-style: solid; background: rgba(5, 150, 105, 0.1); border-color: var(--success); color: var(--success); }
+        
+        .queue-container {
+            margin-bottom: 20px; max-height: 150px; overflow-y: auto; border: 1px solid var(--border); 
+            border-radius: 4px; padding: 10px; background: var(--bg); display: none;
+        }
+        .queue-item { font-size: 0.85em; padding: 6px; border-bottom: 1px solid var(--border); color: var(--text-dark); }
+        .queue-item:last-child { border-bottom: none; }
         
         /* ---------------------------------------------------
-           MOBILE OPTIMIZATION (Calculator Mode)
+           MOBILE OPTIMIZATION
            --------------------------------------------------- */
         @media (max-width: 768px) {
             body { padding: 10px; }
             .container { padding: 0 15px 20px 15px; }
-            
             .sticky-top { position: relative; padding-top: 15px; }
-
             .header, .controls { flex-direction: column; align-items: stretch; text-align: center; gap: 10px; padding: 12px; }
             .header-left { width: 100%; }
             .student-info { flex-direction: column; align-items: stretch; }
             .student-info input { width: 100%; box-sizing: border-box; }
             .score-display { margin-top: 5px; text-align: center; }
-            
             .controls { justify-content: center; }
             .btn-separator { display: none; } 
-            
             .controls button, .controls label.btn, .save-status { 
                 width: 100%; margin-left: 0 !important; padding: 12px; font-size: 1em;
                 box-sizing: border-box; display: flex; justify-content: center; align-items: center;
             }
-            
             .rubric-table th, .rubric-table td { padding: 10px 4px; }
             .criterion-title { width: 30%; font-size: 0.85em; }
             .score-cell { width: 70px; }
-            
             .level-cell:not(.edit-mode) .level-title, .level-cell:not(.edit-mode) .level-desc { display: none; }
             .level-cell:not(.edit-mode) { text-align: center; vertical-align: middle; }
             .level-cell:not(.edit-mode) .level-pts { font-size: 1.3em; margin: 0; padding: 15px 4px; display: block; border: none; background: transparent; }
-            
             .score-input { width: 100%; font-size: 1.4em; padding: 12px 4px; box-sizing: border-box; }
             #smartFillBtn { right: 20px; font-size: 0.9em; padding: 10px 15px; }
+            .modal-content { width: 95%; padding: 20px; }
+            .drop-zone-container { flex-direction: column; }
         }
                       
     </style>
@@ -354,6 +384,28 @@
     <img src="WalEngSpin.gif" alt="Loading..." style="width: 240px; margin-bottom: 20px;">
     <h2 id="loadingText" style="margin:0; white-space: pre-line;">AI is processing...</h2>
     <p id="loadingSubtext" style="margin-top:5px; color:var(--text-light); font-size:1.1em; font-weight:bold;">This usually takes 5-15 seconds.</p>
+</div>
+
+<div id="teachModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>🧠 Teach AI: The Training Cart</h3>
+        <p style="font-size: 0.9em; color: var(--text-light); margin-bottom: 20px;">Provide a student's document and their graded JSON. The app will pair them automatically. Build up a batch, then click Start Learning!</p>
+        
+        <div class="drop-zone-container" style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div id="dropZoneDoc" class="drop-zone" style="flex: 1;">📄 1. Drop Document</div>
+            <input type="file" id="teachDocInput" accept=".pdf, .png, .jpg, .jpeg">
+
+            <div id="dropZoneJson" class="drop-zone" style="flex: 1;">📊 2. Drop JSON</div>
+            <input type="file" id="teachJsonInput" accept=".json">
+        </div>
+
+        <div id="teachQueueContainer" class="queue-container"></div>
+
+        <div style="display: flex; justify-content: space-between; gap: 10px;">
+            <button class="btn-danger" style="width:100%" onclick="closeTeachModal()">Cancel</button>
+            <button id="startTeachBtn" class="btn-success" style="width:100%" disabled onclick="executeTeachAI()">Start Learning (0 Pairs)</button>
+        </div>
+    </div>
 </div>
 
 <div class="container">
@@ -408,8 +460,7 @@
             <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;" title="Auto-Build Rubric (PDF/Image)">✨ Auto-Build</label>
             <input type="file" id="autoBuildFile" accept=".pdf, .png, .jpg, .jpeg">
 
-            <label class="btn btn-purple edit-only" for="teachAIFile" title="Upload a previously graded student PDF AND JSON to extract rules">🧠 Teach AI (Select PDF + JSON)</label>
-            <input type="file" id="teachAIFile" accept=".pdf, .png, .jpg, .jpeg, .json" multiple>
+            <button class="btn btn-purple edit-only" onclick="openTeachModal()" title="Teach AI by batching PDF and JSON pairs">🧠 Teach AI</button>
 
             <label class="btn edit-only" for="uploadRubric" title="Load Rubric (.json)">📂 Rubric</label>
             <input type="file" id="uploadRubric" accept=".json">
@@ -438,7 +489,6 @@
     let reportDirectoryHandle = null; 
     let jsonDirectoryHandle = null;
 
-    // The Grading Queues & Funny Messages
     let reviewQueue = [];
     let funnyInterval;
     const funnyMessages = [
@@ -454,24 +504,10 @@
     // YOUR GOOGLE APPS SCRIPT WEB APP URL
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzp9F_goegloh-FxMFXpGw3FLmkA6kD_nYbNnQs5uBZCr54DLO1euaT2S19hzvARCa_/exec";
 
-    function toggleTheme() {
-        const body = document.body;
-        const btn = document.getElementById('themeToggleBtn');
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
-            if(btn) btn.innerText = '🌙';
-        } else {
-            body.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-            if(btn) btn.innerText = '☀️';
-        }
-    }
-
     let currentRubric = {
         title: "Imagine the Future",
         aiPrompt: "Don't grade the Sales Pitch Video or the physical test plan.",
-        learnedRules: [], // Array to hold distilled logic
+        learnedRules: [], 
         criteria: [
             {
                 name: "Title",
@@ -599,11 +635,164 @@
     let isGraded = {}; 
     let overallComment = "";
 
+    // --- TEACH AI MODAL LOGIC (THE TRAINING CART) ---
+    let teachDocFile = null;
+    let teachJsonFile = null;
+    let teachQueue = [];
+
+    function openTeachModal() {
+        document.getElementById('teachModal').style.display = 'flex';
+        teachQueue = [];
+        resetTeachDropZones();
+        renderTeachQueue();
+    }
+
+    function closeTeachModal() {
+        document.getElementById('teachModal').style.display = 'none';
+    }
+
+    function resetTeachDropZones() {
+        teachDocFile = null; teachJsonFile = null;
+        const dzDoc = document.getElementById('dropZoneDoc');
+        const dzJson = document.getElementById('dropZoneJson');
+        dzDoc.innerText = '📄 1. Drop Document';
+        dzDoc.classList.remove('has-file');
+        dzJson.innerText = '📊 2. Drop JSON';
+        dzJson.classList.remove('has-file');
+    }
+
+    function setupDropZone(zoneId, inputId, expectedType) {
+        const zone = document.getElementById(zoneId);
+        const input = document.getElementById(inputId);
+
+        zone.addEventListener('click', () => input.click());
+
+        zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => { zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault(); zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleTeachFile(e.dataTransfer.files[0], zone, expectedType);
+        });
+        input.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleTeachFile(e.target.files[0], zone, expectedType);
+            input.value = ""; 
+        });
+    }
+
+    function handleTeachFile(file, zone, type) {
+        if (type === 'doc') {
+            if (!file.name.match(/\.(pdf|png|jpg|jpeg)$/i)) { alert("Please upload a PDF or Image."); return; }
+            teachDocFile = file;
+            zone.innerText = "✅ " + file.name.substring(0, 20) + "...";
+        } else {
+            if (!file.name.endsWith('.json')) { alert("Please upload a JSON file."); return; }
+            teachJsonFile = file;
+            zone.innerText = "✅ " + file.name.substring(0, 20) + "...";
+        }
+        zone.classList.add('has-file');
+        
+        // Auto-pair if both exist
+        if (teachDocFile && teachJsonFile) {
+            teachQueue.push({ doc: teachDocFile, json: teachJsonFile });
+            resetTeachDropZones();
+            renderTeachQueue();
+        }
+    }
+
+    function renderTeachQueue() {
+        const container = document.getElementById('teachQueueContainer');
+        const btn = document.getElementById('startTeachBtn');
+        
+        if (teachQueue.length > 0) {
+            container.style.display = 'block';
+            container.innerHTML = teachQueue.map((pair, i) => 
+                `<div class="queue-item">
+                    <strong>Pair ${i+1}:</strong> ${pair.doc.name} ➕ ${pair.json.name}
+                 </div>`
+            ).join('');
+            btn.disabled = false;
+            btn.innerText = `Start Learning (${teachQueue.length} Pairs)`;
+        } else {
+            container.style.display = 'none';
+            btn.disabled = true;
+            btn.innerText = `Start Learning (0 Pairs)`;
+        }
+    }
+
+    async function executeTeachAI() {
+        closeTeachModal();
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        
+        let msgIdx = 0;
+        document.getElementById('loadingSubtext').innerText = funnyMessages[msgIdx];
+        funnyInterval = setInterval(() => {
+            msgIdx = (msgIdx + 1) % funnyMessages.length;
+            document.getElementById('loadingSubtext').innerText = funnyMessages[msgIdx];
+        }, 3500);
+
+        let newRulesCount = 0;
+
+        for (let i = 0; i < teachQueue.length; i++) {
+            let pair = teachQueue[i];
+            document.getElementById('loadingText').innerText = `AI is studying Pair ${i+1} of ${teachQueue.length}...\nExtracting rules from ${pair.json.name}`;
+            
+            try {
+                const jsonText = await new Promise(resolve => {
+                    const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsText(pair.json);
+                });
+                const gradedData = JSON.parse(jsonText);
+
+                const docDataUrl = await new Promise(resolve => {
+                    const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(pair.doc);
+                });
+                const base64Data = docDataUrl.split(',')[1];
+
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: "teach",
+                        fileBase64: base64Data,
+                        mimeType: pair.doc.type,
+                        rubric: currentRubric,
+                        gradedData: { scores: gradedData.scores, comments: gradedData.comments }
+                    })
+                });
+
+                const rawResponse = await response.text();
+                let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                const result = JSON.parse(cleanJson);
+
+                if (result.error) throw new Error(result.error);
+
+                if (result.learnedRules && result.learnedRules.length > 0) {
+                    if (!currentRubric.learnedRules) currentRubric.learnedRules = [];
+                    currentRubric.learnedRules.push(...result.learnedRules);
+                    newRulesCount += result.learnedRules.length;
+                }
+            } catch (err) {
+                console.error(err);
+                alert(`Teach AI Failed on pair ${i+1} (${pair.json.name})!\n\n` + err.message);
+            }
+        }
+
+        clearInterval(funnyInterval);
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('loadingSubtext').innerText = "This usually takes 5-15 seconds.";
+        
+        renderRubric(); // Updates the visual text box
+        
+        if (newRulesCount > 0) {
+            alert(`Success! The AI extracted ${newRulesCount} new rules from the batch.\n\nTotal rules stored: ${currentRubric.learnedRules.length}\n\nDon't forget to click '💾 Template' to save this knowledge!`);
+        } else {
+            alert("Batch complete, but the AI couldn't extract any new definitive rules from these examples.");
+        }
+    }
+
     function init() {
         if (localStorage.getItem('theme') === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
             const btn = document.getElementById('themeToggleBtn');
-            if(btn) btn.innerText = '☀️';
+            if(btn) btn.innerText = '🌙';
         }
 
         document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
@@ -615,6 +804,10 @@
         
         window.addEventListener('scroll', handleScrollForFloatBtn);
         
+        // Setup Teach AI Modal Dropzones
+        setupDropZone('dropZoneDoc', 'teachDocInput', 'doc');
+        setupDropZone('dropZoneJson', 'teachJsonInput', 'json');
+
         // --- EXISTING LOCAL LOADERS ---
         document.getElementById('uploadRubric').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -662,80 +855,6 @@
             e.target.value = ""; 
         });
 
-        // --- NEW: TEACH AI LISTENER (PDF + JSON) ---
-        document.getElementById('teachAIFile').addEventListener('change', async function(e) {
-            const files = Array.from(e.target.files);
-            if (files.length !== 2) {
-                alert("Please select exactly TWO files to teach the AI: the original student PDF/Image AND the exported graded JSON file.");
-                e.target.value = ""; 
-                return;
-            }
-
-            let docFile = files.find(f => !f.name.endsWith('.json'));
-            let jsonFile = files.find(f => f.name.endsWith('.json'));
-
-            if (!docFile || !jsonFile) {
-                alert("Please ensure you selected one Document (PDF/Image) and one JSON file.");
-                e.target.value = ""; 
-                return;
-            }
-
-            document.getElementById('loadingText').innerText = "AI is studying your grading logic...";
-            document.getElementById('loadingSubtext').innerText = "Extracting rules from " + jsonFile.name;
-            document.getElementById('loadingOverlay').style.display = 'flex';
-
-            try {
-                // 1. Read Graded JSON
-                const jsonText = await new Promise(resolve => {
-                    const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsText(jsonFile);
-                });
-                const gradedData = JSON.parse(jsonText);
-
-                // 2. Read Document
-                const docDataUrl = await new Promise(resolve => {
-                    const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(docFile);
-                });
-                const base64Data = docDataUrl.split(',')[1];
-
-                // 3. Send both to AI for Knowledge Distillation
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: "teach",
-                        fileBase64: base64Data,
-                        mimeType: docFile.type,
-                        rubric: currentRubric,
-                        gradedData: { scores: gradedData.scores, comments: gradedData.comments }
-                    })
-                });
-
-                const rawResponse = await response.text();
-                let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-                const result = JSON.parse(cleanJson);
-
-                if (result.error) throw new Error(result.error);
-
-                if (result.learnedRules && result.learnedRules.length > 0) {
-                    if (!currentRubric.learnedRules) currentRubric.learnedRules = [];
-                    currentRubric.learnedRules.push(...result.learnedRules);
-                    
-                    // Re-render to update the visual text box
-                    renderRubric();
-                    
-                    alert("Success! The AI extracted the following rules:\n\n- " + result.learnedRules.join("\n- ") + "\n\nTotal rules stored: " + currentRubric.learnedRules.length + "\n\nDon't forget to click '💾 Template' to save this knowledge!");
-                } else {
-                    alert("The AI couldn't extract any new definitive rules from this example.");
-                }
-
-            } catch (err) {
-                console.error(err);
-                alert("Teach AI Failed!\n\n" + err.message);
-            } finally {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                e.target.value = ''; // Reset input
-            }
-        });
-
         // --- ACTION 1: AUTO-BUILD LISTENER ---
         document.getElementById('autoBuildFile').addEventListener('change', async function(e) {
             const file = e.target.files[0];
@@ -781,7 +900,7 @@
         document.getElementById('autoGradeFile').addEventListener('change', function(e) {
             if(e.target.files.length === 0) return;
             reviewQueue = Array.from(e.target.files);
-            e.target.value = ''; // Reset input
+            e.target.value = ''; 
             processNextReview();
         });
 
@@ -789,7 +908,7 @@
         document.getElementById('batchGradeFile').addEventListener('change', async function(e) {
             const files = Array.from(e.target.files);
             if(files.length === 0) return;
-            e.target.value = ''; // Reset
+            e.target.value = ''; 
             
             if (!reportDirectoryHandle) {
                 alert("Please select a master folder to save your Batch reports into first.");
@@ -799,7 +918,6 @@
 
             document.getElementById('loadingOverlay').style.display = 'flex';
             
-            // Start funny messages cycle
             let msgIdx = 0;
             document.getElementById('loadingSubtext').innerText = funnyMessages[msgIdx];
             funnyInterval = setInterval(() => {
@@ -812,7 +930,6 @@
                 await processSingleBatchFile(files[i]);
             }
 
-            // Cleanup when done
             clearInterval(funnyInterval);
             document.getElementById('loadingOverlay').style.display = 'none';
             document.getElementById('loadingSubtext').innerText = "This usually takes 5-15 seconds.";
@@ -857,12 +974,11 @@
                 if (result && result.error) throw new Error("Google Script says: " + result.error);
                 
                 if (result && result.grades) {
-                    clearGrades(); // Wipe previous student
+                    clearGrades(); 
                     
-                    // Name assignment logic
                     let bestName = result.studentName || "";
                     if (bestName.trim() === "" || bestName === "Unknown Student") {
-                        bestName = file.name.replace(/\.[^/.]+$/, ""); // Fallback to filename
+                        bestName = file.name.replace(/\.[^/.]+$/, ""); 
                     }
                     document.getElementById('studentName').value = bestName;
 
@@ -933,7 +1049,6 @@
                         let totalScore = 0;
                         for (let key in batchScores) { totalScore += batchScores[key]; }
 
-                        // Generate Files
                         let safeStudent = bestName.replace(/[^a-z0-9\s]/gi, '_').trim();
                         let safeProject = (currentRubric.title || "Project").replace(/[^a-z0-9\s]/gi, '_').trim();
                         let jsonFilename = `${safeStudent} - ${safeProject}.json`;
@@ -945,7 +1060,6 @@
                         };
                         const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
                         
-                        // Temporarily swap global state to use the generator function cleanly
                         let tempScores = scores; let tempComments = comments; let tempGraded = isGraded;
                         scores = batchScores; comments = batchComments; isGraded = batchGraded;
                         const htmlReportString = generateStandaloneReport(bestName, currentRubric.title, totalScore);
@@ -953,7 +1067,6 @@
                         
                         const reportBlob = new Blob([htmlReportString], { type: 'text/html' });
 
-                        // Save silently
                         if (reportDirectoryHandle && jsonDirectoryHandle) {
                             await silentWriteFile(jsonDirectoryHandle, jsonFilename, jsonBlob);
                             await silentWriteFile(reportDirectoryHandle, reportFilename, reportBlob);
@@ -962,7 +1075,7 @@
                 } catch (err) {
                     console.error(`Batch failed for ${file.name}`, err);
                 }
-                resolve(); // Move to next regardless of success/fail
+                resolve(); 
             };
             reader.readAsDataURL(file);
         });
@@ -981,7 +1094,19 @@
         }
     }
 
-    // --- STANDARD UI LOGIC ---
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('themeToggleBtn');
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            if(btn) btn.innerText = '🌙';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            if(btn) btn.innerText = '☀️';
+        }
+    }
 
     function updateLearnedRules(val) {
         currentRubric.learnedRules = val.split('\n').filter(r => r.trim() !== '');
@@ -1140,7 +1265,6 @@
                 tr.appendChild(td);
             });
 
-            // FILL EMPTY CELLS CORRECTLY
             let emptyCellsRequired = maxCols - crit.levels.length;
             for (let i = 0; i < emptyCellsRequired; i++) { 
                 const emptyTd = document.createElement('td');
@@ -1280,7 +1404,6 @@
         window.scrollTo(0, 0); 
     }
 
-    // --- HTML Report Generator ---
     function generateStandaloneReport(studentName, projectTitle, totalScore) {
         let maxCols = 0;
         if (currentRubric.criteria.length > 0) {
@@ -1367,9 +1490,6 @@
         html += `</body></html>`;
         return html;
     }
-
-
-    // --- File IO / Directory Handling ---
 
     async function selectSaveDirectory() {
         try {
@@ -1476,7 +1596,6 @@
                 fallbackDownload(reportFilename, reportBlob);
             }
             
-            // Queue Logic: If there are files left, load the next one automatically instead of just clearing
             if (reviewQueue.length > 0) {
                 processNextReview();
             } else {
