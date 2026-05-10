@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WalGrader</title>
+    <title>Dynamic Rubric Grader</title>
     <link rel="icon" type="image/png" href="walgraderfavicon.png">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -110,7 +110,7 @@
             transition: background-color 0.3s;
         }
 
-        #projectTitleContainer, .header, .controls, .rubric-table, #overallCommentsContainer { 
+        #projectTitleContainer, .header, .ai-instruction-box, .controls, .rubric-table, #overallCommentsContainer { 
             position: relative; 
             z-index: 1; 
         }
@@ -120,11 +120,14 @@
         [data-theme="dark"] #projectTitleContainer h1 { color: var(--primary); }
 
         .header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;
             background: rgba(255, 255, 255, 0.4); 
             padding: 15px 20px; border-radius: var(--radius);
             box-shadow: var(--shadow); border: 1px solid var(--border);
         }
+        
+        .header-left { display: flex; flex-direction: column; gap: 10px; width: 60%; }
+        
         .student-info { display: flex; align-items: center; gap: 12px; font-size: 1.05em; font-weight: bold; }
         .student-info input {
             padding: 8px 12px; font-size: 0.95em; width: 300px;
@@ -135,7 +138,15 @@
         .student-info input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 47, 108, 0.1); }
         [data-theme="dark"] .student-info input:focus { box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
 
-        .score-display { font-size: 1.4em; font-weight: 600; color: var(--text-light); }
+        .ai-instruction-box { display: flex; flex-direction: column; gap: 4px; }
+        .ai-instruction-box label { font-size: 0.85em; font-weight: bold; color: var(--text-light); }
+        .ai-instruction-box textarea {
+            padding: 8px; font-size: 0.9em; width: 100%; height: 45px; resize: vertical;
+            border: 1px solid var(--border); border-radius: 4px;
+            font-family: inherit; transition: all 0.2s; background: var(--input-bg); color: var(--text-dark);
+        }
+
+        .score-display { font-size: 1.4em; font-weight: 600; color: var(--text-light); text-align: right; }
         #totalScore { color: var(--primary); font-weight: 700; font-size: 1.2em; }
 
         .controls {
@@ -150,7 +161,7 @@
             padding: 8px 14px; background-color: var(--secondary); color: white;
             border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-size: 0.9em;
             font-family: inherit; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;
-            transition: all 0.2s;
+            transition: all 0.2s; margin: 0;
         }
         button:hover, label.btn:hover { background-color: var(--primary); transform: translateY(-1px); }
         [data-theme="dark"] button { background-color: var(--input-bg); border: 1px solid var(--border); color: var(--text-dark); }
@@ -163,6 +174,7 @@
         .btn-warning { background-color: var(--walton-red); color: white; }
         [data-theme="dark"] .btn-warning { background-color: rgba(248, 113, 113, 0.15); color: #fca5a5; border-color: rgba(248, 113, 113, 0.3); }
         .btn-info { background-color: var(--secondary); }
+        .btn-purple { background-color: #8e44ad; color: white; }
         .theme-toggle { margin-left: auto; background-color: #34495e; padding: 8px 10px; }
         [data-theme="dark"] .theme-toggle { background-color: var(--card-bg); }
         
@@ -289,90 +301,43 @@
             gap: 8px;
             font-family: inherit;
         }
-        #smartFillBtn.visible {
-            bottom: 40px;
-            opacity: 1;
-        }
-        #smartFillBtn:hover {
-            transform: translateY(-3px) scale(1.02);
-            background-color: var(--primary);
-        }
-        [data-theme="dark"] #smartFillBtn {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-        [data-theme="dark"] #smartFillBtn:hover {
-            background-color: rgba(16, 185, 129, 0.3);
-        }
+        #smartFillBtn.visible { bottom: 40px; opacity: 1; }
+        #smartFillBtn:hover { transform: translateY(-3px) scale(1.02); background-color: var(--primary); }
+        [data-theme="dark"] #smartFillBtn { background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        [data-theme="dark"] #smartFillBtn:hover { background-color: rgba(16, 185, 129, 0.3); }
         
-/* ---------------------------------------------------
+        /* ---------------------------------------------------
            MOBILE OPTIMIZATION (Calculator Mode)
            --------------------------------------------------- */
         @media (max-width: 768px) {
             body { padding: 10px; }
             .container { padding: 0 15px 20px 15px; }
             
-            /* FIX 1: Un-stick the massive header on mobile so it scrolls out of the way */
-            .sticky-top {
-                position: relative; 
-                padding-top: 15px;
-            }
+            .sticky-top { position: relative; padding-top: 15px; }
 
-            /* Stack header and controls for easy tapping */
-            .header, .controls {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-                gap: 10px;
-                padding: 12px;
-            }
+            .header, .controls { flex-direction: column; align-items: stretch; text-align: center; gap: 10px; padding: 12px; }
+            .header-left { width: 100%; }
             .student-info { flex-direction: column; align-items: stretch; }
             .student-info input { width: 100%; box-sizing: border-box; }
-            .score-display { margin-top: 5px; }
+            .score-display { margin-top: 5px; text-align: center; }
             
-            /* FIX 2: Force uniform widths and heights on all buttons, labels, and spans */
             .controls { justify-content: center; }
             .btn-separator { display: none; } 
             
             .controls button, .controls label.btn, .save-status { 
-                width: 100%; 
-                margin-left: 0 !important; 
-                padding: 12px; 
-                font-size: 1em;
-                box-sizing: border-box;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                width: 100%; margin-left: 0 !important; padding: 12px; font-size: 1em;
+                box-sizing: border-box; display: flex; justify-content: center; align-items: center;
             }
             
-            /* Table adjustments for strict grading */
             .rubric-table th, .rubric-table td { padding: 10px 4px; }
             .criterion-title { width: 30%; font-size: 0.85em; }
             .score-cell { width: 70px; }
             
-            /* HIDE descriptions and titles in Grade Mode on Mobile */
-            .level-cell:not(.edit-mode) .level-title,
-            .level-cell:not(.edit-mode) .level-desc {
-                display: none;
-            }
-            .level-cell:not(.edit-mode) {
-                text-align: center;
-                vertical-align: middle;
-            }
-            .level-cell:not(.edit-mode) .level-pts {
-                font-size: 1.3em; /* Big tap target */
-                margin: 0;
-                padding: 15px 4px;
-                display: block;
-                border: none;
-                background: transparent;
-            }
+            .level-cell:not(.edit-mode) .level-title, .level-cell:not(.edit-mode) .level-desc { display: none; }
+            .level-cell:not(.edit-mode) { text-align: center; vertical-align: middle; }
+            .level-cell:not(.edit-mode) .level-pts { font-size: 1.3em; margin: 0; padding: 15px 4px; display: block; border: none; background: transparent; }
             
-            /* Manual score entry mobile friendly */
             .score-input { width: 100%; font-size: 1.4em; padding: 12px 4px; box-sizing: border-box; }
-
-            /* Floating button scale for mobile */
             #smartFillBtn { right: 20px; font-size: 0.9em; padding: 10px 15px; }
         }
                       
@@ -382,23 +347,28 @@
 
 <div id="loadingOverlay">
     <img src="WalEngSpin.gif" alt="Loading..." style="width: 240px; margin-bottom: 20px;">
-    <h2 style="margin:0;">AI is reading your rubric...</h2>
+    <h2 id="loadingText" style="margin:0;">AI is processing...</h2>
     <p style="margin-top:5px; color:var(--text-light);">This usually takes 5-15 seconds.</p>
 </div>
 
 <div class="container">
-    
     <div class="watermark-layer"></div>
 
     <div class="sticky-top">
-        <div id="projectTitleContainer">
-            </div>
+        <div id="projectTitleContainer"></div>
 
         <div class="header">
-            <div class="student-info">
-                <label for="studentName">Student/Group Name:</label>
-                <input type="text" id="studentName" placeholder="Enter name(s) here...">
+            <div class="header-left">
+                <div class="student-info">
+                    <label for="studentName">Student/Group Name:</label>
+                    <input type="text" id="studentName" placeholder="Enter name(s) here...">
+                </div>
+                <div class="ai-instruction-box">
+                    <label for="aiPromptInput">🤖 AI Grading Instructions (Saves with Template):</label>
+                    <textarea id="aiPromptInput" placeholder="e.g., Don't grade the video presentation section. Be strict on citations." oninput="currentRubric.aiPrompt = this.value"></textarea>
+                </div>
             </div>
+            
             <div class="score-display">
                 Total: <span id="totalScore">0</span> / <span id="maxScore">105</span>
             </div>
@@ -408,6 +378,9 @@
             <button id="toggleEditBtn" class="btn-warning" onclick="toggleEditMode()" title="Enter Edit Mode">✏️ Edit</button>
             <span class="btn-separator" style="border-left: 2px solid var(--border); height: 30px; margin: 0 10px;"></span>
             
+            <label class="btn btn-purple grade-only" for="autoGradeFile" title="Have AI Grade a Student PDF">🤖 AI Grade</label>
+            <input type="file" id="autoGradeFile" accept=".pdf, .png, .jpg, .jpeg">
+
             <label class="btn btn-info grade-only" for="loadStudentFile" title="Load Student Data">📂 Load</label>
             <input type="file" id="loadStudentFile" accept=".json">
             
@@ -418,7 +391,7 @@
             
             <button id="themeToggleBtn" class="btn theme-toggle grade-only" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
             
-            <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;" title="Auto-Build (PDF/Image)">✨ Auto</label>
+            <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;" title="Auto-Build Rubric (PDF/Image)">✨ Auto-Build</label>
             <input type="file" id="autoBuildFile" accept=".pdf, .png, .jpg, .jpeg">
 
             <label class="btn edit-only" for="uploadRubric" title="Load Rubric (.json)">📂 Rubric</label>
@@ -429,8 +402,7 @@
         </div>
     </div>
 
-    <table class="rubric-table" id="rubricTable">
-        </table>
+    <table class="rubric-table" id="rubricTable"></table>
     
     <div id="addCriterionContainer" style="display: none; margin-bottom: 20px; text-align: center;">
         <button class="btn-success" onclick="addCriterion()">➕ Add New Criteria Row</button>
@@ -442,9 +414,7 @@
     </div>
 </div>
 
-<button id="smartFillBtn" onclick="autoFillMaxPoints()" title="Fills max points for all blank rows above your furthest graded row">
-    ✅ Fill Max Down To Here
-</button>
+<button id="smartFillBtn" onclick="autoFillMaxPoints()" title="Fills max points for all blank rows above your furthest graded row">✅ Fill Max Down To Here</button>
 
 <script>
     let isEditMode = false;
@@ -470,6 +440,7 @@
 
     let currentRubric = {
         title: "Imagine the Future",
+        aiPrompt: "Don't grade the Sales Pitch Video or the physical test plan.",
         criteria: [
             {
                 name: "Title",
@@ -610,7 +581,6 @@
         updateMaxScore();
         clearGrades();
         
-        // Listen for scrolling to show the floating auto-fill button
         window.addEventListener('scroll', handleScrollForFloatBtn);
         
         // --- EXISTING LOCAL LOADERS ---
@@ -624,9 +594,7 @@
                     clearGrades();
                     updateMaxScore();
                     renderRubric();
-                } catch (err) {
-                    alert('Error parsing Rubric JSON file.');
-                }
+                } catch (err) { alert('Error parsing Rubric JSON file.'); }
             };
             reader.readAsText(file);
             e.target.value = ""; 
@@ -653,68 +621,114 @@
                             ocInput.style.height = 'auto';
                             ocInput.style.height = ocInput.scrollHeight + 'px';
                         }
-
                         updateMaxScore();
                         renderRubric();
-                    } else {
-                        alert('Invalid student data file.');
-                    }
-                } catch (err) {
-                    alert('Error parsing Student JSON file.');
-                }
+                    } else { alert('Invalid student data file.'); }
+                } catch (err) { alert('Error parsing Student JSON file.'); }
             };
             reader.readAsText(file);
             e.target.value = ""; 
         });
 
-        // --- NEW AI AUTO-BUILD LISTENER ---
+        // --- ACTION 1: AUTO-BUILD LISTENER ---
         document.getElementById('autoBuildFile').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            // Show Loading Screen
+            document.getElementById('loadingText').innerText = "AI is writing your rubric...";
             document.getElementById('loadingOverlay').style.display = 'flex';
 
             const reader = new FileReader();
             reader.onload = async function(event) {
                 const dataUrl = event.target.result;
-                const base64Data = dataUrl.split(',')[1];
-                const mimeType = file.type;
-
                 try {
-                    // Send to Google Apps Script
                     const response = await fetch(WEB_APP_URL, {
                         method: 'POST',
                         body: JSON.stringify({
-                            fileBase64: base64Data,
-                            mimeType: mimeType
+                            action: "build",
+                            fileBase64: dataUrl.split(',')[1],
+                            mimeType: file.type
                         })
                     });
-
                     const rawResponse = await response.text();
-                    
-                    // Clean up markdown block if Gemini returns it
                     let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
                     const newRubric = JSON.parse(cleanJson);
 
-                    // SURFACING THE REAL ERROR:
-                    if (newRubric && newRubric.error) {
-                        throw new Error("Google Script says: " + newRubric.error);
-                    } else if (newRubric && newRubric.criteria) {
+                    if (newRubric && newRubric.error) throw new Error("Google Script says: " + newRubric.error);
+                    if (newRubric && newRubric.criteria) {
                         currentRubric = newRubric;
                         clearGrades();
                         updateMaxScore();
                         renderRubric();
                         alert("Rubric successfully generated!");
-                    } else {
-                        throw new Error("AI missed the format. It replied with: " + rawResponse.substring(0, 150));
-                    }
+                    } else throw new Error("AI missed the format.");
                 } catch (err) {
-                    console.error(err);
-                    alert("Auto-Build Failed!\n\n" + err.message);
+                    console.error(err); alert("Auto-Build Failed!\n\n" + err.message);
                 } finally {
-                    document.getElementById('loadingOverlay').style.display = 'none';
-                    e.target.value = ''; // Reset input
+                    document.getElementById('loadingOverlay').style.display = 'none'; e.target.value = '';
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // --- ACTION 2: AUTO-GRADE LISTENER ---
+        document.getElementById('autoGradeFile').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Name guesser
+            let fileNameStr = file.name.replace(/\.[^/.]+$/, ""); 
+            if(document.getElementById('studentName').value === "") {
+                document.getElementById('studentName').value = fileNameStr;
+            }
+
+            document.getElementById('loadingText').innerText = "AI is grading student work...";
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const dataUrl = event.target.result;
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: "grade",
+                            fileBase64: dataUrl.split(',')[1],
+                            mimeType: file.type,
+                            rubric: currentRubric,
+                            customPrompt: currentRubric.aiPrompt || ""
+                        })
+                    });
+
+                    const rawResponse = await response.text();
+                    let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const result = JSON.parse(cleanJson);
+
+                    if (result && result.error) throw new Error("Google Script says: " + result.error);
+                    
+                    if (result && result.grades) {
+                        result.grades.forEach(g => {
+                            // Find the exact level index that matches the returned points
+                            let matchedLevelIdx = currentRubric.criteria[g.criterionIndex].levels.findIndex(l => l.points === g.points);
+                            if(matchedLevelIdx !== -1) {
+                                selectScore(g.criterionIndex, matchedLevelIdx, g.points);
+                            } else {
+                                // Fallback manual update if AI gave a weird partial point value
+                                manualScoreUpdate(g.criterionIndex, g.points);
+                            }
+                            // Inject brief feedback
+                            updateRowComment(g.criterionIndex, { value: g.comment });
+                        });
+                        
+                        // Re-render the rubric to show the newly populated comments and selected borders
+                        renderRubric(); 
+                        alert("Auto-Grading Complete!\nPlease review the AI's suggestions before exporting.");
+                    } else throw new Error("AI missed the grading format.");
+
+                } catch (err) {
+                    console.error(err); alert("Auto-Grade Failed!\n\n" + err.message);
+                } finally {
+                    document.getElementById('loadingOverlay').style.display = 'none'; e.target.value = '';
                 }
             };
             reader.readAsDataURL(file);
@@ -724,7 +738,6 @@
     function handleScrollForFloatBtn() {
         const btn = document.getElementById('smartFillBtn');
         if (!btn) return;
-        // Show button if scrolled down slightly and NOT in edit mode
         if (window.scrollY > 150 && !isEditMode) {
             btn.classList.add('visible');
         } else {
@@ -732,46 +745,27 @@
         }
     }
 
-    // --- AUTO FILL LOGIC ---
     function autoFillMaxPoints() {
         if (isEditMode) return;
-
-        // Find the lowest/furthest row that has been manually graded
         let lastGradedIndex = -1;
         for (let i = currentRubric.criteria.length - 1; i >= 0; i--) {
-            if (isGraded[i]) {
-                lastGradedIndex = i;
-                break;
-            }
+            if (isGraded[i]) { lastGradedIndex = i; break; }
         }
 
         let limit = lastGradedIndex !== -1 ? lastGradedIndex : currentRubric.criteria.length;
 
-        // If no grades exist at all, confirm before blindly filling the entire rubric
         if (lastGradedIndex === -1) {
-            if (!confirm("You haven't selected any grades yet. Do you want to automatically fill MAX POINTS for the ENTIRE rubric?")) {
-                return;
-            }
+            if (!confirm("You haven't selected any grades yet. Do you want to automatically fill MAX POINTS for the ENTIRE rubric?")) return;
         }
 
-        // Loop from top down to the lowest graded row and fill in the missing gaps
         for (let i = 0; i < limit; i++) {
             if (!isGraded[i]) {
                 let maxPts = -Infinity;
                 let maxIdx = -1;
-                
-                // Find the level with the highest point value for this criterion
                 currentRubric.criteria[i].levels.forEach((l, lIdx) => {
-                    if (l.points > maxPts) { 
-                        maxPts = l.points; 
-                        maxIdx = lIdx; 
-                    }
+                    if (l.points > maxPts) { maxPts = l.points; maxIdx = lIdx; }
                 });
-                
-                // Assign the max score
-                if (maxIdx !== -1) {
-                    selectScore(i, maxIdx, maxPts);
-                }
+                if (maxIdx !== -1) selectScore(i, maxIdx, maxPts);
             }
         }
     }
@@ -794,29 +788,18 @@
         const gradeEls = document.querySelectorAll('.grade-only');
 
         if (isEditMode) {
-            btn.innerHTML = "💾 Save";
-            btn.title = "Save & Exit Edit Mode";
-            btn.classList.remove('btn-warning');
-            btn.classList.add('btn-success');
-            addContainer.style.display = 'block';
-            overallContainer.style.display = 'none'; 
-            
-            editEls.forEach(el => el.style.display = 'inline-block');
-            gradeEls.forEach(el => el.style.display = 'none');
+            btn.innerHTML = "💾 Save"; btn.title = "Save & Exit Edit Mode";
+            btn.classList.remove('btn-warning'); btn.classList.add('btn-success');
+            addContainer.style.display = 'block'; overallContainer.style.display = 'none'; 
+            editEls.forEach(el => el.style.display = 'inline-block'); gradeEls.forEach(el => el.style.display = 'none');
         } else {
-            btn.innerHTML = "✏️ Edit";
-            btn.title = "Enter Edit Mode";
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-warning');
-            addContainer.style.display = 'none';
-            overallContainer.style.display = 'block';
+            btn.innerHTML = "✏️ Edit"; btn.title = "Enter Edit Mode";
+            btn.classList.remove('btn-success'); btn.classList.add('btn-warning');
+            addContainer.style.display = 'none'; overallContainer.style.display = 'block';
             updateMaxScore(); 
-            
-            editEls.forEach(el => el.style.display = 'none');
-            gradeEls.forEach(el => el.style.display = 'inline-block');
+            editEls.forEach(el => el.style.display = 'none'); gradeEls.forEach(el => el.style.display = 'inline-block');
         }
         
-        // Hide or show the float button based on the mode change
         handleScrollForFloatBtn();
         renderRubric();
     }
@@ -828,6 +811,9 @@
         } else {
             titleContainer.innerHTML = `<h1>${escapeHTML(currentRubric.title || 'Untitled Project')}</h1>`;
         }
+        
+        // Restore AI Prompt to text box on render
+        document.getElementById('aiPromptInput').value = currentRubric.aiPrompt || "";
 
         const table = document.getElementById('rubricTable');
         table.innerHTML = '';
@@ -899,14 +885,12 @@
                 tr.appendChild(td);
             });
 
-            // Fill empty cells
             let emptyCellsRequired = maxCols - crit.levels.length;
             for (let i = 0; i < emptyCellsRequired; i++) {
                 const emptyTd = document.createElement('td');
                 tr.appendChild(emptyTd);
             }
 
-            // End column rendering
             if (isEditMode) {
                 const emptyEndTd = document.createElement('td');
                 emptyEndTd.className = 'score-cell'; 
@@ -929,7 +913,7 @@
                 commentTr.className = 'comments-row';
                 const commentTd = document.createElement('td');
                 commentTd.colSpan = maxCols + 2; 
-                commentTd.innerHTML = `<textarea class="comments-input" placeholder="Comments for ${escapeHTML(crit.name)}..." oninput="updateRowComment(${critIndex}, this)">${escapeHTML(comments[critIndex])}</textarea>`;
+                commentTd.innerHTML = `<textarea class="comments-input" id="comment-input-${critIndex}" placeholder="Comments for ${escapeHTML(crit.name)}..." oninput="updateRowComment(${critIndex}, this)">${escapeHTML(comments[critIndex])}</textarea>`;
                 commentTr.appendChild(commentTd);
                 table.appendChild(commentTr);
             }
@@ -944,80 +928,45 @@
         }
     }
 
-    // --- Interaction Logic ---
-
     function moveCriterion(index, direction) {
         if (direction === -1 && index === 0) return;
         if (direction === 1 && index === currentRubric.criteria.length - 1) return;
 
         const newIndex = index + direction;
-        
         const tempCrit = currentRubric.criteria[index];
         currentRubric.criteria[index] = currentRubric.criteria[newIndex];
         currentRubric.criteria[newIndex] = tempCrit;
 
-        const tempScore = scores[index];
-        scores[index] = scores[newIndex];
-        scores[newIndex] = tempScore;
-
-        const tempComment = comments[index];
-        comments[index] = comments[newIndex];
-        comments[newIndex] = tempComment;
-        
-        const tempGraded = isGraded[index];
-        isGraded[index] = isGraded[newIndex];
-        isGraded[newIndex] = tempGraded;
+        const tempScore = scores[index]; scores[index] = scores[newIndex]; scores[newIndex] = tempScore;
+        const tempComment = comments[index]; comments[index] = comments[newIndex]; comments[newIndex] = tempComment;
+        const tempGraded = isGraded[index]; isGraded[index] = isGraded[newIndex]; isGraded[newIndex] = tempGraded;
 
         renderRubric();
     }
 
-    function insertLevel(critIndex, insertIndex) {
-        currentRubric.criteria[critIndex].levels.splice(insertIndex, 0, { points: 0, title: "New Level", desc: "" });
-        renderRubric();
-    }
-
-    function removeLevel(critIndex, levelIndex) {
-        currentRubric.criteria[critIndex].levels.splice(levelIndex, 1);
-        renderRubric();
-    }
-
-    function addCriterion() {
-        currentRubric.criteria.push({
-            name: "New Criteria",
-            levels: [ { points: 5, title: "Excellent", desc: "" } ]
-        });
-        renderRubric();
-    }
+    function insertLevel(critIndex, insertIndex) { currentRubric.criteria[critIndex].levels.splice(insertIndex, 0, { points: 0, title: "New Level", desc: "" }); renderRubric(); }
+    function removeLevel(critIndex, levelIndex) { currentRubric.criteria[critIndex].levels.splice(levelIndex, 1); renderRubric(); }
+    function addCriterion() { currentRubric.criteria.push({ name: "New Criteria", levels: [ { points: 5, title: "Excellent", desc: "" } ] }); renderRubric(); }
 
     function removeCriterion(critIndex) {
         if(confirm("Are you sure you want to delete this entire row?")) {
             currentRubric.criteria.splice(critIndex, 1);
+            delete scores[critIndex]; delete comments[critIndex]; delete isGraded[critIndex];
             
-            delete scores[critIndex];
-            delete comments[critIndex];
-            delete isGraded[critIndex];
-            
-            let newScores = {};
-            let newComments = {};
-            let newGraded = {};
+            let newScores = {}; let newComments = {}; let newGraded = {};
             currentRubric.criteria.forEach((_, i) => {
                 newScores[i] = scores[i >= critIndex ? i + 1 : i] || 0;
                 newComments[i] = comments[i >= critIndex ? i + 1 : i] || '';
                 newGraded[i] = isGraded[i >= critIndex ? i + 1 : i] || false;
             });
-            scores = newScores;
-            comments = newComments;
-            isGraded = newGraded;
-            
+            scores = newScores; comments = newComments; isGraded = newGraded;
             renderRubric();
         }
     }
 
     function selectScore(critIndex, levelIndex, points) {
         if(isEditMode) return;
-        
         isGraded[critIndex] = true;
-        
         currentRubric.criteria[critIndex].levels.forEach((_, i) => {
             const cell = document.getElementById(`cell-${critIndex}-${i}`);
             if(cell) cell.classList.remove('selected');
@@ -1045,8 +994,10 @@
 
     function updateRowComment(critIndex, element) {
         comments[critIndex] = element.value;
-        element.style.height = 'auto';
-        element.style.height = element.scrollHeight + 'px';
+        if(element.style) {
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight + 'px';
+        }
     }
 
     function updateOverallComment(element) {
@@ -1057,27 +1008,18 @@
 
     function updateTotalDisplay() {
         let total = 0;
-        for (let key in scores) {
-            total += scores[key];
-        }
+        for (let key in scores) { total += scores[key]; }
         document.getElementById('totalScore').innerText = total;
     }
 
     function clearGrades() {
         document.getElementById('studentName').value = '';
         currentRubric.criteria.forEach((crit, idx) => {
-            scores[idx] = 0;
-            comments[idx] = '';
-            isGraded[idx] = false;
+            scores[idx] = 0; comments[idx] = ''; isGraded[idx] = false;
         });
-        
         overallComment = "";
         const ocInput = document.getElementById('overallCommentsInput');
-        if (ocInput) {
-            ocInput.value = "";
-            ocInput.style.height = 'auto';
-        }
-        
+        if (ocInput) { ocInput.value = ""; ocInput.style.height = 'auto'; }
         renderRubric();
         window.scrollTo(0, 0); 
     }
@@ -1097,24 +1039,7 @@
     <title>${escapeHTML(studentName)} - ${escapeHTML(projectTitle)}</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.5; color: #333; max-width: 1100px; margin: 0 auto; padding: 40px; background: #ffffff; position: relative; }
-        
-        /* Massive Top-Right Quarter Watermark for Report */
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 450px;
-            height: 450px;
-            background-image: url('WalEngNoBG.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: top right;
-            opacity: 0.1;
-            pointer-events: none;
-            z-index: -1;
-        }
-
+        body::before { content: ""; position: absolute; top: 0; right: 0; width: 450px; height: 450px; background-image: url('WalEngNoBG.png'); background-size: contain; background-repeat: no-repeat; background-position: top right; opacity: 0.1; pointer-events: none; z-index: -1; }
         .header { text-align: left; border-bottom: 3px solid #002f6c; padding-bottom: 20px; margin-bottom: 30px; position: relative; z-index: 1; }
         h1 { color: #002f6c; margin: 0 0 10px 0; font-size: 2.2em; font-weight: bold; }
         h2 { color: #555; margin: 0; font-size: 1.4em; font-weight: normal; }
@@ -1133,7 +1058,6 @@
         .overall-comments { margin-top: 30px; background: #f9f9fb; padding: 20px; border-radius: 6px; border-left: 5px solid #002f6c; border: 1px solid #bdc3c7; border-left-width: 5px; position: relative; z-index: 1; }
         .overall-comments h3 { color: #002f6c; margin-top: 0; margin-bottom: 15px; }
         .overall-comments div { white-space: pre-wrap; }
-        
         @media print {
             body { padding: 0; max-width: 100%; }
             table { page-break-inside: auto; }
@@ -1163,15 +1087,11 @@
                          </td>`;
             });
 
-            // Fill empty cells if the row is shorter than max
             let emptyCellsRequired = maxCols - crit.levels.length;
-            for (let j = 0; j < emptyCellsRequired; j++) {
-                html += `<td></td>`;
-            }
+            for (let j = 0; j < emptyCellsRequired; j++) { html += `<td></td>`; }
 
             html += `<td class="score-col">${scores[i]}</td></tr>`;
 
-            // Row Comments
             if (comments[i] && comments[i].trim() !== '') {
                 html += `<tr class="comment-row"><td colspan="${maxCols + 2}">
                             <div class="comment-box"><strong>Feedback:</strong><br>${escapeHTML(comments[i])}</div>
@@ -1181,7 +1101,6 @@
 
         html += `</table>`;
 
-        // Overall Comments
         if (overallComment && overallComment.trim() !== '') {
             html += `<div class="overall-comments">
                         <h3>Overall Project Feedback</h3>
@@ -1198,10 +1117,7 @@
 
     async function selectSaveDirectory() {
         try {
-            // Request permission to the main directory (for Reports)
             reportDirectoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-            
-            // Automatically grab (or create) the 'backups' subfolder for JSONs
             jsonDirectoryHandle = await reportDirectoryHandle.getDirectoryHandle('backups', { create: true });
             
             const statusEl = document.getElementById('saveStatus');
@@ -1245,9 +1161,7 @@
         let missingGrades = [];
         
         currentRubric.criteria.forEach((crit, idx) => {
-            if (!isGraded[idx]) {
-                missingGrades.push(crit.name);
-            }
+            if (!isGraded[idx]) { missingGrades.push(crit.name); }
         });
 
         if (!studentName || missingGrades.length > 0) {
@@ -1258,9 +1172,7 @@
             }
             warningMsg += "\nDo you want to export the incomplete grade anyway?";
             
-            if (!confirm(warningMsg)) {
-                return; 
-            }
+            if (!confirm(warningMsg)) { return; }
         }
 
         if (!reportDirectoryHandle && window.showDirectoryPicker) {
@@ -1279,7 +1191,6 @@
         let jsonFilename = `${safeStudent} - ${safeProject}.json`;
         let reportFilename = `${safeStudent} - ${safeProject} - ${totalScore}.html`;
 
-        // 1. Generate JSON Blob
         const exportData = {
             type: "StudentGradeRecord",
             studentName: studentName,
@@ -1291,13 +1202,10 @@
             isGraded: isGraded
         };
         const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-
-        // 2. Generate HTML Report Blob
         const htmlReportString = generateStandaloneReport(studentName, projectTitle, totalScore);
         const reportBlob = new Blob([htmlReportString], { type: 'text/html' });
 
         try {
-            // Save both files silently to their designated folders
             if (reportDirectoryHandle && jsonDirectoryHandle) {
                 const jsonSuccess = await silentWriteFile(jsonDirectoryHandle, jsonFilename, jsonBlob);
                 const reportSuccess = await silentWriteFile(reportDirectoryHandle, reportFilename, reportBlob);
@@ -1308,14 +1216,10 @@
                     fallbackDownload(reportFilename, reportBlob);
                 }
             } else {
-                // Older browser fallback
                 fallbackDownload(jsonFilename, jsonBlob);
                 fallbackDownload(reportFilename, reportBlob);
             }
-
-            // Success -> Clear Board
             clearGrades();
-            
         } catch (error) {
             console.error("Export Error", error);
             alert("An error occurred while generating the files.");
@@ -1332,13 +1236,7 @@
     function escapeHTML(str) {
         if(!str) return '';
         return str.toString().replace(/[&<>'"]/g, 
-            tag => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                "'": '&#39;',
-                '"': '&quot;'
-            }[tag] || tag)
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
         );
     }
 
