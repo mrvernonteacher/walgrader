@@ -146,6 +146,8 @@
             border: 1px solid var(--border); border-radius: 4px;
             font-family: inherit; transition: all 0.2s; background: var(--input-bg); color: var(--text-dark);
         }
+        #learnedRulesInput { height: 80px; font-family: monospace; background: rgba(0, 47, 108, 0.03); border-color: var(--secondary); }
+        [data-theme="dark"] #learnedRulesInput { background: rgba(96, 165, 250, 0.05); }
 
         .score-display { font-size: 1.4em; font-weight: 600; color: var(--text-light); text-align: right; }
         #totalScore { color: var(--primary); font-weight: 700; font-size: 1.2em; }
@@ -261,6 +263,10 @@
         .edit-pts { width: 60px; font-weight: bold; color: var(--walton-red); }
         .move-controls { display: flex; gap: 4px; margin-top: 8px; }
 
+        /* Dark mode overrides for header transparent boxes */
+        [data-theme="dark"] .header { background: rgba(0, 0, 0, 0.2); border-color: #444; }
+        [data-theme="dark"] .controls { background: rgba(0, 0, 0, 0.2); border-color: #444; }
+
         /* Loading Screen CSS */
         #loadingOverlay {
             display: none;
@@ -362,9 +368,15 @@
                     <label for="studentName">Student/Group Name:</label>
                     <input type="text" id="studentName" placeholder="Enter name(s) here...">
                 </div>
+                
                 <div class="ai-instruction-box">
                     <label for="aiPromptInput">🤖 AI Grading Instructions (Saves with Template):</label>
                     <textarea id="aiPromptInput" placeholder="e.g., Don't grade the video presentation section. Be strict on citations." oninput="currentRubric.aiPrompt = this.value"></textarea>
+                </div>
+
+                <div class="ai-instruction-box edit-only" style="margin-top: 5px;">
+                    <label for="learnedRulesInput">🧠 Extracted Teacher Rules (Edit/Delete as needed):</label>
+                    <textarea id="learnedRulesInput" placeholder="Rules extracted from the Teach AI tool will appear here..." oninput="updateLearnedRules(this.value)"></textarea>
                 </div>
             </div>
             
@@ -396,8 +408,8 @@
             <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;" title="Auto-Build Rubric (PDF/Image)">✨ Auto-Build</label>
             <input type="file" id="autoBuildFile" accept=".pdf, .png, .jpg, .jpeg">
 
-            <label class="btn btn-purple edit-only" for="teachAIFile" title="Upload a previously graded student JSON to teach the AI your comment style">🧠 Teach AI</label>
-            <input type="file" id="teachAIFile" accept=".json">
+            <label class="btn btn-purple edit-only" for="teachAIFile" title="Upload a previously graded student PDF AND JSON to extract rules">🧠 Teach AI (Select PDF + JSON)</label>
+            <input type="file" id="teachAIFile" accept=".pdf, .png, .jpg, .jpeg, .json" multiple>
 
             <label class="btn edit-only" for="uploadRubric" title="Load Rubric (.json)">📂 Rubric</label>
             <input type="file" id="uploadRubric" accept=".json">
@@ -459,7 +471,7 @@
     let currentRubric = {
         title: "Imagine the Future",
         aiPrompt: "Don't grade the Sales Pitch Video or the physical test plan.",
-        examples: [], // Hidden array to store AI training data
+        learnedRules: [], // Array to hold distilled logic
         criteria: [
             {
                 name: "Title",
@@ -650,28 +662,78 @@
             e.target.value = ""; 
         });
 
-        // --- NEW: TEACH AI LISTENER ---
-        document.getElementById('teachAIFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.type === "StudentGradeRecord") {
-                        if (!currentRubric.examples) currentRubric.examples = [];
-                        
-                        currentRubric.examples.push({
-                            scores: data.scores,
-                            comments: data.comments
-                        });
-                        
-                        alert(`Successfully learned from ${data.studentName || "the example"}!\nTotal examples stored: ${currentRubric.examples.length}\n\nDon't forget to click '💾 Template' to permanently save this new knowledge!`);
-                    } else { alert('Invalid file. Please upload a previously graded student JSON.'); }
-                } catch (err) { alert('Error parsing JSON file.'); }
-            };
-            reader.readAsText(file);
-            e.target.value = ""; 
+        // --- NEW: TEACH AI LISTENER (PDF + JSON) ---
+        document.getElementById('teachAIFile').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length !== 2) {
+                alert("Please select exactly TWO files to teach the AI: the original student PDF/Image AND the exported graded JSON file.");
+                e.target.value = ""; 
+                return;
+            }
+
+            let docFile = files.find(f => !f.name.endsWith('.json'));
+            let jsonFile = files.find(f => f.name.endsWith('.json'));
+
+            if (!docFile || !jsonFile) {
+                alert("Please ensure you selected one Document (PDF/Image) and one JSON file.");
+                e.target.value = ""; 
+                return;
+            }
+
+            document.getElementById('loadingText').innerText = "AI is studying your grading logic...";
+            document.getElementById('loadingSubtext').innerText = "Extracting rules from " + jsonFile.name;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            try {
+                // 1. Read Graded JSON
+                const jsonText = await new Promise(resolve => {
+                    const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsText(jsonFile);
+                });
+                const gradedData = JSON.parse(jsonText);
+
+                // 2. Read Document
+                const docDataUrl = await new Promise(resolve => {
+                    const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(docFile);
+                });
+                const base64Data = docDataUrl.split(',')[1];
+
+                // 3. Send both to AI for Knowledge Distillation
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: "teach",
+                        fileBase64: base64Data,
+                        mimeType: docFile.type,
+                        rubric: currentRubric,
+                        gradedData: { scores: gradedData.scores, comments: gradedData.comments }
+                    })
+                });
+
+                const rawResponse = await response.text();
+                let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                const result = JSON.parse(cleanJson);
+
+                if (result.error) throw new Error(result.error);
+
+                if (result.learnedRules && result.learnedRules.length > 0) {
+                    if (!currentRubric.learnedRules) currentRubric.learnedRules = [];
+                    currentRubric.learnedRules.push(...result.learnedRules);
+                    
+                    // Re-render to update the visual text box
+                    renderRubric();
+                    
+                    alert("Success! The AI extracted the following rules:\n\n- " + result.learnedRules.join("\n- ") + "\n\nTotal rules stored: " + currentRubric.learnedRules.length + "\n\nDon't forget to click '💾 Template' to save this knowledge!");
+                } else {
+                    alert("The AI couldn't extract any new definitive rules from this example.");
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Teach AI Failed!\n\n" + err.message);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                e.target.value = ''; // Reset input
+            }
         });
 
         // --- ACTION 1: AUTO-BUILD LISTENER ---
@@ -919,8 +981,11 @@
         }
     }
 
-
     // --- STANDARD UI LOGIC ---
+
+    function updateLearnedRules(val) {
+        currentRubric.learnedRules = val.split('\n').filter(r => r.trim() !== '');
+    }
 
     function handleScrollForFloatBtn() {
         const btn = document.getElementById('smartFillBtn');
@@ -1000,6 +1065,11 @@
         }
         
         document.getElementById('aiPromptInput').value = currentRubric.aiPrompt || "";
+        
+        const rulesInput = document.getElementById('learnedRulesInput');
+        if (rulesInput) {
+            rulesInput.value = (currentRubric.learnedRules || []).join('\n');
+        }
 
         const table = document.getElementById('rubricTable');
         table.innerHTML = '';
