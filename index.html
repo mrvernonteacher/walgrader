@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Rubric Grader</title>
+    <title>WalGrader</title>
     <link rel="icon" type="image/png" href="walgraderfavicon.png">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -46,7 +46,7 @@
             --text-light: #aaa;
             --shadow: 0 4px 10px rgba(0,0,0,0.5);
             --card-bg: #1a1a1a;
-            --header-bg: rgba(26, 26, 26, 0.65);
+            --header-bg: rgba(18, 18, 18, 0.25); /* Properly dark & transparent */
             --input-bg: #2a2a2a;
             --walton-red: #ff6b6b;
         }
@@ -124,6 +124,7 @@
             background: rgba(255, 255, 255, 0.4); 
             padding: 15px 20px; border-radius: var(--radius);
             box-shadow: var(--shadow); border: 1px solid var(--border);
+            transition: background 0.3s, border-color 0.3s;
         }
         
         .header-left { display: flex; flex-direction: column; gap: 10px; width: 60%; }
@@ -154,7 +155,7 @@
             background: rgba(255, 255, 255, 0.4); 
             padding: 12px 20px;
             border-radius: var(--radius); align-items: center; border: 1px solid var(--border); box-shadow: var(--shadow);
-            transition: background-color 0.3s;
+            transition: background 0.3s, border-color 0.3s;
         }
         
         button, label.btn {
@@ -260,6 +261,10 @@
         .edit-pts { width: 60px; font-weight: bold; color: var(--walton-red); }
         .move-controls { display: flex; gap: 4px; margin-top: 8px; }
 
+        /* Dark mode overrides for header transparent boxes to force consistency */
+        [data-theme="dark"] .header { background: rgba(0, 0, 0, 0.2); border-color: #444; }
+        [data-theme="dark"] .controls { background: rgba(0, 0, 0, 0.2); border-color: #444; }
+
         /* Loading Screen CSS */
         #loadingOverlay {
             display: none;
@@ -273,6 +278,7 @@
             align-items: center;
             color: var(--primary);
             font-family: inherit;
+            text-align: center;
         }
         [data-theme="dark"] #loadingOverlay { background: rgba(18, 18, 18, 0.85); color: #60a5fa; }
 
@@ -344,8 +350,8 @@
 
 <div id="loadingOverlay">
     <img src="WalEngSpin.gif" alt="Loading..." style="width: 240px; margin-bottom: 20px;">
-    <h2 id="loadingText" style="margin:0;">AI is processing...</h2>
-    <p id="loadingSubtext" style="margin-top:5px; color:var(--text-light);">This usually takes 5-15 seconds.</p>
+    <h2 id="loadingText" style="margin:0; white-space: pre-line;">AI is processing...</h2>
+    <p id="loadingSubtext" style="margin-top:5px; color:var(--text-light); font-size:1.1em; font-weight:bold;">This usually takes 5-15 seconds.</p>
 </div>
 
 <div class="container">
@@ -421,8 +427,18 @@
     let reportDirectoryHandle = null; 
     let jsonDirectoryHandle = null;
 
-    // The Grading Queues
+    // The Grading Queues & Funny Messages
     let reviewQueue = [];
+    let funnyInterval;
+    const funnyMessages = [
+        "Go ahead and grab a ☕...",
+        "Actually go eat lunch 🥪...",
+        "Stare out the window for a minute 🪟...",
+        "Contemplate the meaning of a 'B+' 🤔...",
+        "Take a deep breath... you're doing great 🧘‍♂️...",
+        "Stretch those grading muscles 🏋️...",
+        "Dream about summer break 🏖️..."
+    ];
     
     // YOUR GOOGLE APPS SCRIPT WEB APP URL
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzp9F_goegloh-FxMFXpGw3FLmkA6kD_nYbNnQs5uBZCr54DLO1euaT2S19hzvARCa_/exec";
@@ -697,14 +713,24 @@
 
             document.getElementById('loadingOverlay').style.display = 'flex';
             
+            // Start funny messages cycle
+            let msgIdx = 0;
+            document.getElementById('loadingSubtext').innerText = funnyMessages[msgIdx];
+            funnyInterval = setInterval(() => {
+                msgIdx = (msgIdx + 1) % funnyMessages.length;
+                document.getElementById('loadingSubtext').innerText = funnyMessages[msgIdx];
+            }, 3500);
+            
             for (let i = 0; i < files.length; i++) {
-                document.getElementById('loadingText').innerText = `Batch Grading: ${i + 1} of ${files.length}`;
-                document.getElementById('loadingSubtext').innerText = `Processing ${files[i].name}...`;
+                document.getElementById('loadingText').innerText = `Batch Grading: ${i + 1} of ${files.length}\n(${files[i].name})`;
                 await processSingleBatchFile(files[i]);
             }
 
+            // Cleanup when done
+            clearInterval(funnyInterval);
             document.getElementById('loadingOverlay').style.display = 'none';
             document.getElementById('loadingSubtext').innerText = "This usually takes 5-15 seconds.";
+            document.getElementById('loadingText').innerText = "AI is processing...";
             alert(`Batch Complete! ${files.length} reports saved to your folder.`);
         });
     }
@@ -1020,7 +1046,7 @@
                 tr.appendChild(td);
             });
 
-            // FILL EMPTY CELLS CORRECTLY (No more html += crashes!)
+            // FILL EMPTY CELLS CORRECTLY
             let emptyCellsRequired = maxCols - crit.levels.length;
             for (let i = 0; i < emptyCellsRequired; i++) { 
                 const emptyTd = document.createElement('td');
