@@ -128,7 +128,6 @@
         [data-theme="dark"] .btn-nav { color: #93c5fd; border-color: #93c5fd; }
         [data-theme="dark"] .btn-nav.active, [data-theme="dark"] .btn-nav:hover { background-color: rgba(96, 165, 250, 0.15); }
 
-        /* Custom Red Nav Button for Clear Scores */
         .btn-nav-danger {
             background-color: transparent; color: var(--danger); border: 1px solid var(--danger);
             padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;
@@ -161,7 +160,7 @@
         button, label.btn {
             padding: 8px 14px; background-color: var(--secondary); color: white;
             border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-size: 0.9em;
-            font-family: inherit; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;
+            font-family: inherit; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
             transition: all 0.2s; margin: 0;
         }
         button:hover, label.btn:hover { background-color: var(--primary); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
@@ -213,7 +212,7 @@
         [data-theme="dark"] .student-info input:focus { box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
 
         .header-right { display: flex; align-items: center; gap: 20px; }
-        .score-display { font-size: 1.4em; font-weight: 600; color: var(--text-light); text-align: right; }
+        .score-display { font-size: 1.4em; font-weight: 600; color: var(--text-light); text-align: right; white-space: nowrap; }
         #totalScore { color: var(--primary); font-weight: 700; font-size: 1.2em; }
 
         /* --- AI TEXT AREAS (COLOR CODED) --- */
@@ -225,12 +224,10 @@
             border-radius: 4px; transition: all 0.2s; height: 100px;
         }
         
-        /* Blue Scheme for Manual Prompts */
         .blue-scheme-box { background: rgba(44, 82, 156, 0.05); border: 1px solid var(--secondary); color: var(--text-dark); font-family: inherit;}
         .blue-scheme-box:focus { outline: none; box-shadow: 0 0 0 3px rgba(44, 82, 156, 0.15); }
         [data-theme="dark"] .blue-scheme-box { background: rgba(96, 165, 250, 0.05); border-color: #38bdf8; }
         
-        /* Red Scheme for Extracted Rules */
         .red-scheme-box { background: rgba(200, 16, 46, 0.05); border: 1px solid var(--danger); color: var(--text-dark); font-family: monospace; }
         .red-scheme-box:focus { outline: none; box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.15); }
         [data-theme="dark"] .red-scheme-box { background: rgba(248, 113, 113, 0.05); border-color: #f87171; }
@@ -435,8 +432,8 @@
                 <button id="btnSetup" class="btn-nav" onclick="toggleSetup()" title="Toggle Setup & Edit Mode">
                     <span id="gearIcon" class="material-symbols-outlined anim-icon">settings</span> <span class="hide-mobile">Setup</span>
                 </button>
-                <button id="btnAI" class="btn-nav" onclick="toggleAI()" title="Toggle AI Engine Tools">
-                    <span id="robotIcon" class="material-symbols-outlined anim-icon">smart_toy</span> <span class="hide-mobile">AI Engine</span>
+                <button id="btnAI" class="btn-nav" onclick="toggleAI()" title="Toggle GrAIder Tools">
+                    <span id="robotIcon" class="material-symbols-outlined anim-icon">smart_toy</span> <span class="hide-mobile">GrAIder</span>
                 </button>
                 <button class="btn-nav icon-only" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
                     <span id="themeIcon" class="material-symbols-outlined">dark_mode</span>
@@ -468,10 +465,10 @@
                 <div class="panel-content">
                     
                     <div class="controls-row" style="justify-content: flex-start;">
-                        <label class="btn btn-info grade-only" for="autoGradeFile" title="Have AI Grade Student PDFs (Review One-by-One)"><span class="material-symbols-outlined">robot_2</span> Review GrAIder</label>
+                        <label class="btn btn-info" for="autoGradeFile" title="Have AI Grade Student PDFs (Review One-by-One)"><span class="material-symbols-outlined">robot_2</span> Review GrAIder</label>
                         <input type="file" id="autoGradeFile" accept=".pdf, .png, .jpg, .jpeg" multiple>
 
-                        <label class="btn btn-purple grade-only" for="batchGradeFile" title="Silent Batch Auto-Grade directly to Folder"><span class="material-symbols-outlined">rocket_launch</span> Batch GrAIder</label>
+                        <label class="btn btn-purple" for="batchGradeFile" title="Silent Batch Auto-Grade directly to Folder"><span class="material-symbols-outlined">rocket_launch</span> Batch GrAIder</label>
                         <input type="file" id="batchGradeFile" accept=".pdf, .png, .jpg, .jpeg" multiple>
                     </div>
                     
@@ -484,9 +481,9 @@
                             <textarea id="aiPromptInput" class="blue-scheme-box" placeholder="e.g., Don't grade the video presentation section. Be strict on citations." oninput="currentRubric.aiPrompt = this.value"></textarea>
                         </div>
 
-                        <div class="ai-instruction-box edit-only" style="flex: 1; min-width: 250px;">
+                        <div class="ai-instruction-box" style="flex: 1; min-width: 250px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <label for="learnedRulesInput"><span class="material-symbols-outlined">rule</span> Extracted Rules (Edit/Delete):</label>
+                                <label for="learnedRulesInput"><span class="material-symbols-outlined">rule</span> Extracted Rules (Saves w/ Template):</label>
                                 <button class="btn btn-danger btn-small" style="margin:0;" onclick="openTeachModal()" title="Teach GrAIder by batching PDF and JSON pairs"><span class="material-symbols-outlined" style="font-size: 14px;">psychology</span> Teach GrAIder</button>
                             </div>
                             <textarea id="learnedRulesInput" class="red-scheme-box" placeholder="Rules extracted from the Teach GrAIder tool will appear here..." oninput="updateLearnedRules(this.value)"></textarea>
@@ -502,7 +499,7 @@
                 <label for="studentName">Student/Group:</label>
                 <div style="display:flex; gap:10px; width: 100%; align-items: center;">
                     <input type="text" id="studentName" placeholder="Enter name(s) here..." style="max-width: 400px; flex-grow: 1;">
-                    <label class="btn btn-info" for="loadStudentFile" title="Import a previously saved student JSON" style="margin: 0;"><span class="material-symbols-outlined">upload</span> Import</label>
+                    <label class="btn btn-info" for="loadStudentFile" title="Import a previously saved student JSON" style="margin: 0; white-space: nowrap;"><span class="material-symbols-outlined">upload</span> Import</label>
                     <input type="file" id="loadStudentFile" accept=".json">
                 </div>
             </div>
@@ -511,7 +508,7 @@
                 <div class="score-display">
                     Total: <span id="totalScore">0</span> / <span id="maxScore">100</span>
                 </div>
-                <button id="exportMainBtn" class="btn-success grade-only" style="padding: 10px 20px; font-size: 1.1em;" onclick="exportStudentDataAndReport()" title="Export Student (HTML Report & Data)"><span class="material-symbols-outlined">sim_card_download</span> Export</button>
+                <button id="exportMainBtn" class="btn-success" style="padding: 8px 16px; font-size: 1em; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center;" onclick="exportStudentDataAndReport()" title="Export Student (HTML Report & Data)"><span class="material-symbols-outlined">sim_card_download</span> Export</button>
             </div>
         </div>
     </div>
@@ -705,8 +702,13 @@
         const btn = document.getElementById('btnSetup');
         
         isSetupOpen = !isSetupOpen;
+        isEditMode = isSetupOpen; 
+        
         setupRot += 180;
         icon.style.transform = `rotate(${setupRot}deg)`;
+
+        const addContainer = document.getElementById('addCriterionContainer');
+        const overallContainer = document.getElementById('overallCommentsContainer');
 
         if (isSetupOpen) {
             wrapper.classList.remove('collapsed'); wrapper.classList.add('open'); btn.classList.add('active');
@@ -717,7 +719,6 @@
                 document.getElementById('addCriterionContainer').style.display = 'block';
                 document.getElementById('overallCommentsContainer').style.display = 'none';
                 document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'inline-flex');
-                document.querySelectorAll('.grade-only').forEach(el => el.style.display = 'none');
                 renderRubric();
             }
 
@@ -731,7 +732,6 @@
                 document.getElementById('addCriterionContainer').style.display = 'none';
                 document.getElementById('overallCommentsContainer').style.display = 'block';
                 document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('.grade-only').forEach(el => el.style.display = 'inline-block');
                 updateMaxScore();
                 renderRubric();
             }
@@ -869,7 +869,7 @@
                     currentRubric.learnedRules.push(...result.learnedRules);
                     newRulesCount += result.learnedRules.length;
                 }
-            } catch (err) { console.error(err); alert(`Teach AI Failed on pair ${i+1} (${pair.json.name})!\n\n` + err.message); }
+            } catch (err) { console.error(err); alert(`Teach GrAIder Failed on pair ${i+1} (${pair.json.name})!\n\n` + err.message); }
         }
 
         clearInterval(funnyInterval); document.getElementById('loadingOverlay').style.display = 'none';
@@ -891,9 +891,6 @@
         } else {
             if(icon) icon.innerText = 'dark_mode'; 
         }
-
-        document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.grade-only').forEach(el => el.style.display = 'inline-block');
 
         updateMaxScore(); clearGrades(); updateExportButtonUI();
         window.addEventListener('scroll', handleScrollForFloatBtn);
@@ -1069,7 +1066,6 @@
     }
 
     function autoFillMaxPoints() {
-        if (isEditMode) return;
         let lastGradedIndex = -1;
         for (let i = currentRubric.criteria.length - 1; i >= 0; i--) { if (isGraded[i]) { lastGradedIndex = i; break; } }
         let limit = lastGradedIndex !== -1 ? lastGradedIndex : currentRubric.criteria.length;
