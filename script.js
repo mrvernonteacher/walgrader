@@ -168,49 +168,46 @@ let overallComment = "";
 
 // --- UI TOGGLE LOGIC ---
 function toggleSetup() {
-    const wrapper = document.getElementById('setupWrapper');
-    const icon = document.getElementById('gearIcon');
-    const btn = document.getElementById('btnSetup');
-    
     isSetupOpen = !isSetupOpen;
     isEditMode = isSetupOpen; 
     
-    setupRot += 180;
-    icon.style.transform = `rotate(${setupRot}deg)`;
-
+    const wrapper = document.getElementById('setupWrapper');
+    const icon = document.getElementById('gearIcon');
+    const btn = document.getElementById('btnSetup');
     const addContainer = document.getElementById('addCriterionContainer');
     const overallContainer = document.getElementById('overallCommentsContainer');
 
+    if (icon) {
+        setupRot += 180;
+        icon.style.transform = `rotate(${setupRot}deg)`;
+    }
+
     if (isSetupOpen) {
         // FORCE UI OPEN
-        wrapper.classList.remove('collapsed'); 
-        wrapper.classList.add('open'); 
-        btn.classList.add('active');
+        if(wrapper) { wrapper.classList.remove('collapsed'); wrapper.classList.add('open'); }
+        if(btn) btn.classList.add('active');
+        if(addContainer) addContainer.style.display = 'block';
+        if(overallContainer) overallContainer.style.display = 'none';
         
-        // FORCE EDIT MODE ON
-        addContainer.style.display = 'block';
-        overallContainer.style.display = 'none';
-        document.querySelectorAll('.edit-only').forEach(el => el.style.display = el.tagName === 'DIV' ? 'flex' : 'inline-flex');
-        document.querySelectorAll('.grade-only').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.edit-only').forEach(el => { el.style.display = el.tagName === 'DIV' ? 'flex' : 'inline-flex'; });
+        document.querySelectorAll('.grade-only').forEach(el => { el.style.display = 'none'; });
 
         if (isAIOpen) toggleAI(); 
     } else {
         // FORCE UI CLOSED
-        wrapper.classList.add('collapsed'); 
-        wrapper.classList.remove('open'); 
-        btn.classList.remove('active');
+        if(wrapper) { wrapper.classList.add('collapsed'); wrapper.classList.remove('open'); }
+        if(btn) btn.classList.remove('active');
+        if(addContainer) addContainer.style.display = 'none';
+        if(overallContainer) overallContainer.style.display = 'block';
         
-        // FORCE EDIT MODE OFF
-        addContainer.style.display = 'none';
-        overallContainer.style.display = 'block';
-        document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.grade-only').forEach(el => el.style.display = el.tagName === 'DIV' ? 'flex' : 'inline-flex');
+        document.querySelectorAll('.edit-only').forEach(el => { el.style.display = 'none'; });
+        document.querySelectorAll('.grade-only').forEach(el => { el.style.display = el.tagName === 'DIV' ? 'flex' : 'inline-flex'; });
         
-        updateMaxScore();
+        try { updateMaxScore(); } catch(e) {}
     }
     
-    renderRubric();
-    handleScrollForFloatBtn();
+    try { renderRubric(); } catch(e) {}
+    try { handleScrollForFloatBtn(); } catch(e) {}
 }
 
 function toggleAI() {
@@ -221,12 +218,14 @@ function toggleAI() {
     isAIOpen = !isAIOpen;
 
     if (isAIOpen) {
-        wrapper.classList.remove('collapsed'); wrapper.classList.add('open'); btn.classList.add('active');
-        icon.classList.add('pulsing'); 
+        if(wrapper) { wrapper.classList.remove('collapsed'); wrapper.classList.add('open'); }
+        if(btn) btn.classList.add('active');
+        if(icon) icon.classList.add('pulsing'); 
         if (isSetupOpen) toggleSetup(); 
     } else {
-        wrapper.classList.add('collapsed'); wrapper.classList.remove('open'); btn.classList.remove('active');
-        icon.classList.remove('pulsing');
+        if(wrapper) { wrapper.classList.add('collapsed'); wrapper.classList.remove('open'); }
+        if(btn) btn.classList.remove('active');
+        if(icon) icon.classList.remove('pulsing');
     }
 }
 
@@ -378,10 +377,8 @@ function init() {
         reader.onload = function(e) {
             try { 
                 currentRubric = JSON.parse(e.target.result); 
-                clearGrades(); 
-                updateMaxScore(); 
                 
-                // Force exit edit mode and visually close the Setup menu if it was open
+                // If Setup is open, automatically close it (which repaints the UI into grade mode)
                 if (isSetupOpen) {
                     toggleSetup(); 
                 } else {
@@ -390,8 +387,10 @@ function init() {
                     document.getElementById('overallCommentsContainer').style.display = 'block';
                     document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
                     document.querySelectorAll('.grade-only').forEach(el => el.style.display = el.tagName === 'DIV' ? 'flex' : 'inline-flex');
-                    renderRubric();
                 }
+                
+                clearGrades(); 
+                updateMaxScore(); 
             } 
             catch (err) { alert('Error parsing Rubric JSON file.'); }
         }; reader.readAsText(file); e.target.value = ""; 
@@ -441,7 +440,12 @@ function init() {
 
     document.getElementById('batchGradeFile').addEventListener('change', async function(e) {
         const files = Array.from(e.target.files); if(files.length === 0) return; e.target.value = ''; 
-        if (!reportDirectoryHandle) { alert("Please select a master folder in Setup first."); if(isAIOpen) toggleAI(); if(!isSetupOpen) toggleSetup(); return; }
+        if (!reportDirectoryHandle) { 
+            alert("Please select a master folder in Setup first."); 
+            if(isAIOpen) toggleAI(); 
+            if(!isSetupOpen) toggleSetup(); 
+            return; 
+        }
         document.getElementById('loadingOverlay').style.display = 'flex';
         let msgIdx = 0; document.getElementById('loadingSubtext').innerText = funnyMessages[msgIdx];
         funnyInterval = setInterval(() => { msgIdx = (msgIdx + 1) % funnyMessages.length; document.getElementById('loadingSubtext').innerText = funnyMessages[msgIdx]; }, 3500);
@@ -514,7 +518,8 @@ async function processSingleBatchFile(file) {
                     let totalScore = 0; for (let key in batchScores) { totalScore += batchScores[key]; }
 
                     let safeStudent = bestName.replace(/[^a-z0-9\s]/gi, '_').trim(); let safeProject = (currentRubric.title || "Project").replace(/[^a-z0-9\s]/gi, '_').trim();
-                    let jsonFilename = `${safeStudent} - ${safeProject}.json`; let reportFilename = `${safeStudent} - ${safeProject} - ${totalScore}.html`;
+                    let jsonFilename = `${safeStudent} - ${safeProject}.json`; 
+                    let reportFilename = `${safeStudent} - ${safeProject} - ${totalScore}.html`;
 
                     const exportData = { type: "StudentGradeRecord", studentName: bestName, projectTitle: currentRubric.title, rubric: currentRubric, scores: batchScores, comments: batchComments, overallComment: "", isGraded: batchGraded };
                     const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -837,17 +842,17 @@ function generateStandaloneReport(studentName, projectTitle, totalScore) {
 }
 
 async function exportStudentDataAndReport() {
-    
-    // Check directory FIRST before running any alerts so the browser doesn't block the file picker!
+    // 1. Force Folder Selection First (Avoids Browser Security Block)
     if (!reportDirectoryHandle) {
         try {
             await selectSaveDirectory();
         } catch(e) {
-            return;
+            return; // Exit if they cancel the folder picker
         }
         if (!reportDirectoryHandle) return; 
     }
 
+    // 2. Validate Data
     let studentName = document.getElementById('studentName').value.trim();
     let missingGrades = [];
     currentRubric.criteria.forEach((crit, idx) => { if (!isGraded[idx]) { missingGrades.push(crit.name); } });
@@ -867,6 +872,7 @@ async function exportStudentDataAndReport() {
     let safeProject = projectTitle.replace(/[^a-z0-9\s]/gi, '_').trim();
     let totalScore = document.getElementById('totalScore').innerText;
 
+    // 3. Inject Score into Filenames
     let jsonFilename = `${safeStudent} - ${safeProject}.json`;
     let reportFilename = `${safeStudent} - ${safeProject} - ${totalScore}.html`;
 
@@ -883,7 +889,7 @@ async function exportStudentDataAndReport() {
         if (reviewQueue.length > 0) { processNextReview(); } 
         else { clearGrades(); updateExportButtonUI(); }
         
-    } catch (error) { console.error("Export Error", error); alert("An error occurred while generating the files."); }
+    } catch (error) { console.error("Export Error", error); alert("An error occurred while saving the files."); }
 }
 
 async function exportRubricTemplate() {
