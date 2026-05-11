@@ -115,9 +115,37 @@
             z-index: 1; 
         }
 
-        #projectTitleContainer { text-align: left; margin-bottom: 20px; }
+        #projectTitleContainer { text-align: left; }
         #projectTitleContainer h1 { margin: 0; font-size: 2.2em; font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
         [data-theme="dark"] #projectTitleContainer h1 { color: var(--primary); }
+
+        /* --- UI COLLAPSE STYLES --- */
+        .title-row {
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+        }
+        .gear-icon {
+            display: inline-block;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-settings {
+            background-color: transparent; color: var(--primary); border: 1px solid var(--primary);
+            padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;
+            transition: all 0.2s; font-family: inherit; font-size: 0.95em;
+        }
+        .btn-settings:hover { background-color: var(--primary); color: white; }
+        [data-theme="dark"] .btn-settings { color: #93c5fd; border-color: #93c5fd; }
+        [data-theme="dark"] .btn-settings:hover { background-color: rgba(96, 165, 250, 0.15); }
+
+        .settings-wrapper {
+            display: grid; grid-template-rows: 1fr;
+            transition: grid-template-rows 0.4s ease-out, opacity 0.3s ease-out, margin 0.4s ease-out;
+            opacity: 1; margin-bottom: 15px;
+        }
+        .settings-wrapper.collapsed {
+            grid-template-rows: 0fr; opacity: 0; margin-bottom: 0; pointer-events: none;
+        }
+        .settings-inner { overflow: hidden; }
 
         .header {
             display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;
@@ -128,6 +156,7 @@
         }
         
         .header-left { display: flex; flex-direction: column; gap: 10px; width: 60%; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 15px; min-width: 250px; }
         
         .student-info { display: flex; align-items: center; gap: 12px; font-size: 1.05em; font-weight: bold; }
         .student-info input {
@@ -168,10 +197,10 @@
         }
         button:hover, label.btn:hover { background-color: var(--primary); transform: translateY(-1px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
-        [data-theme="dark"] button:not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-purple):not(.btn-darkred) { 
+        [data-theme="dark"] button:not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-purple):not(.btn-darkred):not(.btn-settings) { 
             background-color: var(--input-bg); border: 1px solid var(--border); color: var(--text-dark); 
         }
-        [data-theme="dark"] button:hover:not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-purple):not(.btn-darkred) { 
+        [data-theme="dark"] button:hover:not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-purple):not(.btn-darkred):not(.btn-settings) { 
             background-color: var(--border); 
         }
         
@@ -271,48 +300,23 @@
         .edit-pts { width: 60px; font-weight: bold; color: var(--walton-red); }
         .move-controls { display: flex; gap: 4px; margin-top: 8px; }
 
-        /* FIXED: Dark mode overrides for header transparent boxes */
         [data-theme="dark"] .header { background: rgba(30, 30, 30, 0.85); border-color: #555; }
         [data-theme="dark"] .controls { background: rgba(30, 30, 30, 0.85); border-color: #555; }
 
-        /* Loading Screen CSS */
         #loadingOverlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(5px);
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: var(--primary);
-            font-family: inherit;
-            text-align: center;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(5px); z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center;
+            color: var(--primary); font-family: inherit; text-align: center;
         }
         [data-theme="dark"] #loadingOverlay { background: rgba(18, 18, 18, 0.85); color: #60a5fa; }
 
-        /* Floating Auto-Fill Button */
         #smartFillBtn {
-            position: fixed;
-            bottom: -100px; 
-            right: 40px;
-            background-color: var(--success);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 12px 20px;
-            font-size: 1.05em;
-            font-weight: bold;
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            z-index: 2000;
-            opacity: 0;
-            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, transform 0.2s, background-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: inherit;
+            position: fixed; bottom: -100px; right: 40px; background-color: var(--success);
+            color: white; border: none; border-radius: 50px; padding: 12px 20px;
+            font-size: 1.05em; font-weight: bold; box-shadow: var(--shadow); cursor: pointer;
+            z-index: 2000; opacity: 0; transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, transform 0.2s, background-color 0.2s;
+            display: flex; align-items: center; gap: 8px; font-family: inherit;
         }
         #smartFillBtn.visible { bottom: 40px; opacity: 1; }
         #smartFillBtn:hover { transform: translateY(-3px) scale(1.02); background-color: var(--primary); }
@@ -322,21 +326,16 @@
         /* --- TEACH AI MODAL CSS --- */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 10000;
-            justify-content: center; align-items: center;
-            backdrop-filter: blur(3px);
+            background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(3px);
         }
         .modal-content {
             background: var(--card-bg); padding: 30px; border-radius: var(--radius);
-            width: 600px; max-width: 90%; box-shadow: var(--shadow);
-            border: 1px solid var(--border); text-align: left;
+            width: 600px; max-width: 90%; box-shadow: var(--shadow); border: 1px solid var(--border); text-align: left;
         }
         .modal-content h3 { margin-top: 0; color: var(--primary); }
         .drop-zone {
-            border: 2px dashed var(--primary); padding: 15px; text-align: center;
-            border-radius: var(--radius); cursor: pointer;
-            transition: all 0.2s; background: var(--input-bg); color: var(--text-dark);
-            font-weight: bold; display: flex; align-items: center; justify-content: center;
+            border: 2px dashed var(--primary); padding: 15px; text-align: center; border-radius: var(--radius); cursor: pointer;
+            transition: all 0.2s; background: var(--input-bg); color: var(--text-dark); font-weight: bold; display: flex; align-items: center; justify-content: center;
             min-height: 60px; word-break: break-word; font-size: 0.9em;
         }
         .drop-zone.dragover { background: rgba(0, 47, 108, 0.1); transform: scale(1.02); }
@@ -357,12 +356,14 @@
             body { padding: 10px; }
             .container { padding: 0 15px 20px 15px; }
             .sticky-top { position: relative; padding-top: 15px; }
-            .header, .controls { flex-direction: column; align-items: stretch; text-align: center; gap: 10px; padding: 12px; }
+            .header { flex-direction: column; align-items: stretch; text-align: center; gap: 10px; padding: 12px; }
             .header-left { width: 100%; }
+            .header-right { width: 100%; align-items: stretch !important; margin-top: 5px;}
             .student-info { flex-direction: column; align-items: stretch; }
             .student-info input { width: 100%; box-sizing: border-box; }
             .score-display { margin-top: 5px; text-align: center; }
-            .controls { justify-content: center; }
+            
+            .controls { flex-direction: column; align-items: stretch; text-align: center; gap: 10px; padding: 12px; justify-content: center; }
             .btn-separator { display: none; } 
             .controls button, .controls label.btn, .save-status { 
                 width: 100%; margin-left: 0 !important; padding: 12px; font-size: 1em;
@@ -416,7 +417,47 @@
     <div class="watermark-layer"></div>
 
     <div class="sticky-top">
-        <div id="projectTitleContainer"></div>
+        
+        <div class="title-row">
+            <div id="projectTitleContainer"></div>
+            <button class="btn-settings" onclick="toggleSettings()" title="Toggle Setup & Settings">
+                <span id="gearIcon" class="gear-icon">⚙️</span> <span class="hide-mobile">Settings</span>
+            </button>
+        </div>
+
+        <div id="settingsWrapper" class="settings-wrapper open">
+            <div class="settings-inner">
+                <div class="controls">
+                    <button id="toggleEditBtn" class="btn-warning" onclick="toggleEditMode()" title="Enter Edit Mode">✏️ Edit</button>
+                    <span class="btn-separator" style="border-left: 2px solid var(--border); height: 30px; margin: 0 10px;"></span>
+                    
+                    <label class="btn btn-purple grade-only" for="autoGradeFile" title="Have AI Grade Student PDFs (Review One-by-One)">🤖 AI Grade</label>
+                    <input type="file" id="autoGradeFile" accept=".pdf, .png, .jpg, .jpeg" multiple>
+
+                    <label class="btn btn-darkred grade-only" for="batchGradeFile" title="Silent Batch Auto-Grade directly to Folder">🚀 Batch</label>
+                    <input type="file" id="batchGradeFile" accept=".pdf, .png, .jpg, .jpeg" multiple>
+
+                    <label class="btn btn-info grade-only" for="loadStudentFile" title="Load Student Data">📂 Load</label>
+                    <input type="file" id="loadStudentFile" accept=".json">
+                    
+                    <button class="btn grade-only" onclick="selectSaveDirectory()" title="Set Save Folder">📁 Save</button>
+                    <span id="saveStatus" class="save-status grade-only">No folder</span>
+                    
+                    <button id="themeToggleBtn" class="btn theme-toggle grade-only" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+                    
+                    <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;" title="Auto-Build Rubric (PDF/Image)">✨ Auto-Build</label>
+                    <input type="file" id="autoBuildFile" accept=".pdf, .png, .jpg, .jpeg">
+
+                    <button class="btn btn-purple edit-only" onclick="openTeachModal()" title="Teach AI by batching PDF and JSON pairs">🧠 Teach AI</button>
+
+                    <label class="btn edit-only" for="uploadRubric" title="Load Rubric (.json)">📂 Rubric</label>
+                    <input type="file" id="uploadRubric" accept=".json">
+                    
+                    <button class="edit-only btn-success" onclick="exportRubricTemplate()" title="Export Template">💾 Template</button>
+                    <button onclick="clearGrades()" class="btn-danger edit-only" title="Reset Grades">🗑️ Reset</button>
+                </div>
+            </div>
+        </div>
 
         <div class="header">
             <div class="header-left">
@@ -436,41 +477,12 @@
                 </div>
             </div>
             
-            <div class="score-display">
-                Total: <span id="totalScore">0</span> / <span id="maxScore">105</span>
+            <div class="header-right">
+                <div class="score-display">
+                    Total: <span id="totalScore">0</span> / <span id="maxScore">105</span>
+                </div>
+                <button id="exportMainBtn" class="btn-success grade-only" style="padding: 10px 20px; font-size: 1.1em; width: 100%; justify-content: center;" onclick="exportStudentDataAndReport()" title="Export Student (HTML Report & Data)">🖨️ Export</button>
             </div>
-        </div>
-
-        <div class="controls">
-            <button id="toggleEditBtn" class="btn-warning" onclick="toggleEditMode()" title="Enter Edit Mode">✏️ Edit</button>
-            <span class="btn-separator" style="border-left: 2px solid var(--border); height: 30px; margin: 0 10px;"></span>
-            
-            <label class="btn btn-purple grade-only" for="autoGradeFile" title="Have AI Grade Student PDFs (Review One-by-One)">🤖 AI Grade</label>
-            <input type="file" id="autoGradeFile" accept=".pdf, .png, .jpg, .jpeg" multiple>
-
-            <label class="btn btn-darkred grade-only" for="batchGradeFile" title="Silent Batch Auto-Grade directly to Folder">🚀 Batch</label>
-            <input type="file" id="batchGradeFile" accept=".pdf, .png, .jpg, .jpeg" multiple>
-
-            <label class="btn btn-info grade-only" for="loadStudentFile" title="Load Student Data">📂 Load</label>
-            <input type="file" id="loadStudentFile" accept=".json">
-            
-            <button class="btn grade-only" onclick="selectSaveDirectory()" title="Set Save Folder">📁 Save</button>
-            <span id="saveStatus" class="save-status grade-only">No folder</span>
-            
-            <button id="exportMainBtn" class="btn-success grade-only" onclick="exportStudentDataAndReport()" title="Export Student (HTML Report & Data)">🖨️ Export</button>
-            
-            <button id="themeToggleBtn" class="btn theme-toggle grade-only" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
-            
-            <label class="btn btn-warning edit-only" for="autoBuildFile" style="margin-left: auto;" title="Auto-Build Rubric (PDF/Image)">✨ Auto-Build</label>
-            <input type="file" id="autoBuildFile" accept=".pdf, .png, .jpg, .jpeg">
-
-            <button class="btn btn-purple edit-only" onclick="openTeachModal()" title="Teach AI by batching PDF and JSON pairs">🧠 Teach AI</button>
-
-            <label class="btn edit-only" for="uploadRubric" title="Load Rubric (.json)">📂 Rubric</label>
-            <input type="file" id="uploadRubric" accept=".json">
-            
-            <button class="edit-only btn-success" onclick="exportRubricTemplate()" title="Export Template">💾 Template</button>
-            <button onclick="clearGrades()" class="btn-danger edit-only" title="Reset Grades">🗑️ Reset</button>
         </div>
     </div>
 
@@ -490,6 +502,8 @@
 
 <script>
     let isEditMode = false;
+    let isSettingsOpen = true; // Tracks the state of the settings menu
+    let currentGearRotation = 0; // Tracks the physical spin of the gear icon
     let reportDirectoryHandle = null; 
     let jsonDirectoryHandle = null;
 
@@ -638,6 +652,24 @@
     let comments = {};
     let isGraded = {}; 
     let overallComment = "";
+
+    // --- UI TOGGLE LOGIC ---
+    function toggleSettings() {
+        const wrapper = document.getElementById('settingsWrapper');
+        const gear = document.getElementById('gearIcon');
+        
+        isSettingsOpen = !isSettingsOpen;
+        
+        // Spin the gear half a rotation smoothly every click
+        currentGearRotation += 180;
+        gear.style.transform = `rotate(${currentGearRotation}deg)`;
+
+        if (isSettingsOpen) {
+            wrapper.classList.remove('collapsed');
+        } else {
+            wrapper.classList.add('collapsed');
+        }
+    }
 
     // --- TEACH AI MODAL LOGIC (THE TRAINING CART) ---
     let teachDocFile = null;
@@ -1009,13 +1041,11 @@
         reader.readAsDataURL(file);
     }
 
-    // Helper to safely delete older HTML reports for the same student/project
     async function cleanupOldReports(dirHandle, safeStudent, safeProject, currentFilename) {
         if (!dirHandle) return;
         try {
             const prefix = `${safeStudent} - ${safeProject}`;
             for await (const [name, handle] of dirHandle.entries()) {
-                // If it's an old report for this exact project but the score/filename differs, delete it
                 if (name.startsWith(prefix) && name.endsWith('.html') && name !== currentFilename) {
                     await dirHandle.removeEntry(name);
                 }
@@ -1113,20 +1143,6 @@
         }
     }
 
-    function toggleTheme() {
-        const body = document.body;
-        const btn = document.getElementById('themeToggleBtn');
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
-            if(btn) btn.innerText = '🌙';
-        } else {
-            body.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-            if(btn) btn.innerText = '☀️';
-        }
-    }
-
     function updateLearnedRules(val) {
         currentRubric.learnedRules = val.split('\n').filter(r => r.trim() !== '');
     }
@@ -1188,6 +1204,9 @@
             btn.classList.remove('btn-warning'); btn.classList.add('btn-success');
             addContainer.style.display = 'block'; overallContainer.style.display = 'none'; 
             editEls.forEach(el => el.style.display = 'inline-block'); gradeEls.forEach(el => el.style.display = 'none');
+            
+            // Auto-open settings if entering Edit Mode
+            if (!isSettingsOpen) toggleSettings();
         } else {
             btn.innerHTML = "✏️ Edit"; btn.title = "Enter Edit Mode";
             btn.classList.remove('btn-success'); btn.classList.add('btn-warning');
