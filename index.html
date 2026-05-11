@@ -46,7 +46,7 @@
             --text-light: #aaa;
             --shadow: 0 4px 10px rgba(0,0,0,0.5);
             --card-bg: #1a1a1a;
-            --header-bg: rgba(18, 18, 18, 0.65); 
+            --header-bg: rgba(26, 26, 26, 0.65); 
             --input-bg: #2a2a2a;
             --walton-red: #ff6b6b;
         }
@@ -270,6 +270,10 @@
         .edit-flex { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
         .edit-pts { width: 60px; font-weight: bold; color: var(--walton-red); }
         .move-controls { display: flex; gap: 4px; margin-top: 8px; }
+
+        /* FIXED: Dark mode overrides for header transparent boxes */
+        [data-theme="dark"] .header { background: rgba(30, 30, 30, 0.85); border-color: #555; }
+        [data-theme="dark"] .controls { background: rgba(30, 30, 30, 0.85); border-color: #555; }
 
         /* Loading Screen CSS */
         #loadingOverlay {
@@ -1005,6 +1009,20 @@
         reader.readAsDataURL(file);
     }
 
+    // Helper to safely delete older HTML reports for the same student/project
+    async function cleanupOldReports(dirHandle, safeStudent, safeProject, currentFilename) {
+        if (!dirHandle) return;
+        try {
+            const prefix = `${safeStudent} - ${safeProject}`;
+            for await (const [name, handle] of dirHandle.entries()) {
+                // If it's an old report for this exact project but the score/filename differs, delete it
+                if (name.startsWith(prefix) && name.endsWith('.html') && name !== currentFilename) {
+                    await dirHandle.removeEntry(name);
+                }
+            }
+        } catch(e) { console.warn("Cleanup error", e); }
+    }
+
     async function processSingleBatchFile(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -1068,6 +1086,7 @@
                         const reportBlob = new Blob([htmlReportString], { type: 'text/html' });
 
                         if (reportDirectoryHandle && jsonDirectoryHandle) {
+                            await cleanupOldReports(reportDirectoryHandle, safeStudent, safeProject, reportFilename);
                             await silentWriteFile(jsonDirectoryHandle, jsonFilename, jsonBlob);
                             await silentWriteFile(reportDirectoryHandle, reportFilename, reportBlob);
                         }
@@ -1510,6 +1529,7 @@
     async function silentWriteFile(handle, filename, blobData) {
         if (!handle) return false;
         try {
+            try { await handle.removeEntry(filename); } catch(e) {} 
             const fileHandle = await handle.getFileHandle(filename, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(blobData);
@@ -1583,6 +1603,7 @@
 
         try {
             if (reportDirectoryHandle && jsonDirectoryHandle) {
+                await cleanupOldReports(reportDirectoryHandle, safeStudent, safeProject, reportFilename);
                 const jsonSuccess = await silentWriteFile(jsonDirectoryHandle, jsonFilename, jsonBlob);
                 const reportSuccess = await silentWriteFile(reportDirectoryHandle, reportFilename, reportBlob);
                 
