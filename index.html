@@ -79,6 +79,8 @@
                             <label class="btn btn-info" for="uploadRubric" title="Load an existing Rubric Template"><span class="material-symbols-outlined">upload_file</span> Load Template</label>
                             <input type="file" id="uploadRubric" accept=".json">
                             
+                            <button class="btn-info" onclick="exportCleanRubric()" title="Export a clean HTML rubric for students"><span class="material-symbols-outlined">description</span> Student Rubric</button>
+
                             <button class="btn-success" onclick="exportRubricTemplate()" title="Export current Rubric as Template"><span class="material-symbols-outlined">save</span> Save Template</button>
                         </div>
                     </div>
@@ -90,6 +92,13 @@
             <div class="panel-inner">
                 <div class="panel-content">
                     
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                        <span class="material-symbols-outlined" style="color: var(--primary);">key</span>
+                        <input type="password" id="geminiApiKey" placeholder="Paste Gemini API Key Here..." 
+                               style="flex-grow: 1; border: 1px solid var(--border); padding: 8px; border-radius: 4px; background: var(--input-bg); color: var(--text-dark);">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-nav" style="font-size: 0.8em; text-decoration: none;">Get Free Key</a>
+                    </div>
+
                     <div class="controls-row-split">
                         <div class="left-controls">
                             <label class="btn btn-info" for="autoGradeFile" title="Have AI Grade Student PDFs (Review One-by-One)"><span class="material-symbols-outlined">robot_2</span> Review GrAIder</label>
@@ -137,7 +146,7 @@
                 <div class="score-display">
                     Total: <span id="totalScore">0</span> / <span id="maxScore">100</span>
                 </div>
-                <button id="exportMainBtn" class="btn-success grade-only" onclick="exportStudentDataAndReport()" title="Export Student (HTML Report & Data)" style="white-space: nowrap;"><span class="material-symbols-outlined">sim_card_download</span> Export</button>
+                <button id="exportMainBtn" class="btn-success grade-only" onclick="exportStudentDataAndReport()" title="Export Student (HTML Report & Data)" style="margin: 0; white-space: nowrap;"><span class="material-symbols-outlined">sim_card_download</span> Export</button>
             </div>
         </div>
     </div>
@@ -198,6 +207,6 @@
     </div>
 </div>
 
-<script src="script.js?v=4"></script>
+<script src="script.js?v=5"></script>
 </body>
 </html>
