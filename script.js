@@ -541,8 +541,8 @@ async function processSingleBatchFile(file) {
                     let totalScore = 0; for (let key in batchScores) { totalScore += batchScores[key]; }
 
                     let safeStudent = bestName.replace(/[^a-z0-9\s]/gi, '_').trim(); let safeProject = (currentRubric.title || "Project").replace(/[^a-z0-9\s]/gi, '_').trim();
-                    let jsonFilename = `${safeStudent} - ${safeProject}.json`; 
-                    let reportFilename = `${safeStudent} - ${safeProject} - ${totalScore}.html`;
+                    let jsonFilename = `${safeStudent} Feedback - ${safeProject}.json`; 
+                    let reportFilename = `${safeStudent} Feedback - ${safeProject} - ${totalScore}.html`;
 
                     const exportData = { type: "StudentGradeRecord", studentName: bestName, projectTitle: currentRubric.title, rubric: currentRubric, scores: batchScores, comments: batchComments, overallComment: "", isGraded: batchGraded };
                     const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -950,8 +950,8 @@ async function exportStudentDataAndReport() {
     let safeProject = projectTitle.replace(/[^a-z0-9\s]/gi, '_').trim();
     let totalScore = document.getElementById('totalScore').innerText;
 
-    let jsonFilename = `${safeStudent} - ${safeProject}.json`;
-    let reportFilename = `${safeStudent} - ${safeProject} - ${totalScore}.html`;
+    let jsonFilename = `${safeStudent} Feedback - ${safeProject}.json`;
+    let reportFilename = `${safeStudent} Feedback - ${safeProject} - ${totalScore}.html`;
 
     const exportData = { type: "StudentGradeRecord", studentName: studentName, projectTitle: projectTitle, rubric: currentRubric, scores: scores, comments: comments, overallComment: overallComment, isGraded: isGraded };
     const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
